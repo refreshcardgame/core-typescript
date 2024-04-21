@@ -1,0 +1,4 @@
+{
+  "name": "startPhase",
+  "resolve": [{ "type": "draw", "players": { "type": "players" }, "count": 2 }]
+}

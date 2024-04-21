@@ -1,0 +1,23 @@
+{
+  "name": "round",
+  "register": [{ "type": "variable", "name": "index", "set": 0 }],
+  "resolve": [
+    {
+      "type": "turn",
+      "player": { "type": "player", "index": { "type": "variable", "name": "index" } }
+    },
+    {
+      "type": "if",
+      "condition": {
+        "type": "less",
+        "left": {
+          "type": "variable",
+          "name": "index",
+          "set": { "type": "add", "left": { "type": "variable", "name": "index" }, "right": 1 }
+        },
+        "right": { "type": "get", "property": "length", "from": { "type": "players" } }
+      },
+      "then": { "type": "goto", "value": 0 }
+    }
+  ]
+}

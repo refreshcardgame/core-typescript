@@ -3,13 +3,10 @@
     {
       "console": "internalConsole",
       "name": "Node.js: Launch Program",
-      "program": "${workspaceFolder}/test/index.ts",
+      "program": "${file}",
       "request": "launch",
       "runtimeArgs": ["--inspect", "--watch"],
-      "skipFiles": [
-        "<node_internals>/**",
-        "${workspaceFolder}/node_modules/**"
-      ],
+      "skipFiles": ["<node_internals>/**", "${workspaceFolder}/node_modules/**"],
       "type": "node"
     }
   ],

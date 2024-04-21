@@ -1,0 +1,22 @@
+import type { CoreVariableInstructionType } from "../constants/instruction.ts";
+import {
+  evaluate,
+  type CoreInstructionHandler,
+  type CoreInstructionOrLiteral,
+} from "../instruction.ts";
+import type { CoreType } from "../type.ts";
+
+export interface CoreVariableInstruction extends CoreType<CoreVariableInstructionType> {
+  name: CoreInstructionOrLiteral;
+  set?: CoreInstructionOrLiteral;
+}
+
+export const variable: CoreInstructionHandler<CoreVariableInstruction> = (
+  event,
+  { name, set },
+  response,
+) => {
+  return typeof set === "undefined"
+    ? event.getVariable(String(evaluate(event, name, response)))
+    : event.setVariable(String(evaluate(event, name, response)), evaluate(event, set, response));
+};

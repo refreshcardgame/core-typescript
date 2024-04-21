@@ -1,0 +1,8 @@
+{
+  "name": "turn",
+  "resolve": [
+    { "type": "phase", "name": "start", "player": { "type": "player" } },
+    { "type": "phase", "name": "main", "player": { "type": "player" } },
+    { "type": "phase", "name": "end", "player": { "type": "player" } }
+  ]
+}

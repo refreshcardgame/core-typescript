@@ -1,0 +1,1 @@
+{ "name": "mainPhase", "resolve": [{ "type": "trigger", "timings": ["main"] }] }

@@ -1,0 +1,4 @@
+{
+  "name": "initial",
+  "resolve": [{ "type": "round" }, { "type": "goto", "target": 0 }]
+}

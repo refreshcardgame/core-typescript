@@ -1,0 +1,9 @@
+{
+  "name": "transfer",
+  "resolve": [
+    {
+      "type": "transfer",
+      "destinations": { "type": "variable", "name": "destinations" }
+    }
+  ]
+}

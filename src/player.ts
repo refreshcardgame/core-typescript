@@ -1,163 +1,187 @@
-import { RCGCard, type RCGCardID, type RCGExclusiveCardZone } from "./card.ts";
+import { DoublyLinkedList } from "data-structure-typed";
+import type { SetRequired } from "type-fest";
 import {
-  RCGEndPhaseEvent,
-  RCGMainPhaseEvent,
-  RCGStartPhaseEvent,
-} from "./events/phase.ts";
-import { RCGTurnEvent } from "./events/turn.ts";
-import type { RCGGame } from "./game.ts";
-import type { RCGCharacterCard } from "./types/cards/character.ts";
-import type {
-  RCGRawResponses,
-  RCGRequest,
-  RCGRequests,
-  RCGResponse,
-} from "./types/request.ts";
+  CORE_INITIAL_PLAYER_INTEGRITY,
+  CORE_PLAYER_TYPE,
+  type CorePlayerType,
+} from "./constants/player.ts";
+import {
+  CORE_AFTER_SIDE,
+  CORE_BEFORE_SIDE,
+  CORE_DECK_ZONE,
+  CORE_EXTRA_ZONE,
+  CORE_HAND_ZONE,
+  CORE_RECYCLE_ZONE,
+} from "./constants/position.ts";
+import { CoreEvent, type CoreEventOptions } from "./event.ts";
+import endPhase from "./events/phases/end.json" with { type: "json" };
+import mainPhase from "./events/phases/main.json" with { type: "json" };
+import startPhase from "./events/phases/start.json" with { type: "json" };
+import turn from "./events/turn.json" with { type: "json" };
+import type { CoreGame } from "./game.ts";
+import type { CoreObject } from "./object.ts";
+import type { CoreTypedPayload } from "./payload.ts";
+import { toPositionData, type CoreObjectIndex, type CorePlayerZone } from "./position.ts";
 
-export type RCGPlayerName = string;
+export type CorePlayerPayload = CoreTypedPayload<CorePlayerType>;
 
-export interface RCGPlayerData {
-  characters: RCGCardID[];
-  extraDeck: RCGCardID[];
-  deck: RCGCardID[];
-  hand: RCGCardID[];
-  integrity: number;
-  name: RCGPlayerName;
-  recycleBin: RCGCardID[];
-  type: "player";
+export interface CorePlayerStarting {
+  characters: number[];
+  deck: string[];
+  extra: string[];
 }
 
-export class RCGPlayer {
-  characters: RCGCardID[] = [];
-  deck: RCGCardID[] = [];
-  extraDeck: RCGCardID[] = [];
-  game: RCGGame;
-  hand: RCGCardID[] = [];
-  integrity = 16;
-  name: string;
-  recycleBin: RCGCardID[] = [];
-  type = "player" as const;
+export interface CorePlayerData extends CorePlayerPayload {
+  characters: string[];
+  deck: string[];
+  extra: string[];
+  hand: string[];
+  integrity: number;
+  recycle: string[];
+  starting: CorePlayerStarting;
+}
 
-  constructor(game: RCGGame, name: RCGPlayerName) {
+export type CorePlayerOptions = SetRequired<Partial<CorePlayerData>, "id" | "starting">;
+
+export class CorePlayer {
+  characters: string[];
+  deck: DoublyLinkedList<string, string>;
+  extra: DoublyLinkedList<string, string>;
+  game: CoreGame;
+  hand: DoublyLinkedList<string, string>;
+  id: string;
+  integrity: number;
+  recycle: DoublyLinkedList<string, string>;
+  starting: CorePlayerStarting;
+  type = CORE_PLAYER_TYPE;
+
+  constructor(
+    game: CoreGame,
+    { characters, deck, extra, hand, id, integrity, recycle, starting }: CorePlayerOptions,
+  ) {
     this.game = game;
-    this.name = name;
+    this.id = id;
+    this.characters = characters ?? [];
+    this.deck = new DoublyLinkedList(deck);
+    this.extra = new DoublyLinkedList(extra);
+    this.hand = new DoublyLinkedList(hand);
+    this.integrity = integrity ?? CORE_INITIAL_PLAYER_INTEGRITY;
+    this.recycle = new DoublyLinkedList(recycle);
+    this.starting = starting;
   }
 
-  addCard(card: RCGCard, zone: RCGExclusiveCardZone): this {
-    this.game.addCard(card);
-    this[zone].push(card.id);
-    return this;
+  endPhase(): CoreEvent {
+    const options: CoreEventOptions = { ...endPhase, player: this.id };
+    return this.game.state.run(new CoreEvent(this.game, options));
   }
 
-  addCards(cards: RCGCard[], zone: RCGExclusiveCardZone): this {
-    for (const card of cards) {
-      this.addCard(card, zone);
+  getCharacter(index?: number): CoreObject | undefined {
+    if (typeof index === "number") return this.game.state.getObject(this.characters[index]);
+  }
+
+  getMainCharacter(): CoreObject | undefined {
+    return this.game.state.getObject(this.characters[0]);
+  }
+
+  getNext(): CorePlayer | undefined {
+    return this.game.state.getPlayer(
+      (this.game.state.order.getNode(this.id)?.next ?? this.game.state.order.head)?.value,
+    );
+  }
+
+  getPrevious(): CorePlayer | undefined {
+    return this.game.state.getPlayer(
+      (this.game.state.order.getNode(this.id)?.prev ?? this.game.state.order.tail)?.value,
+    );
+  }
+
+  in(
+    objects: CoreObject | CoreObject[],
+    zone: CorePlayerZone,
+    { side, target }: CoreObjectIndex = { side: CORE_AFTER_SIDE },
+  ): number {
+    if (!Array.isArray(objects)) objects = [objects];
+
+    for (const object of objects) {
+      this[zone].delete(object.id);
+      object.position = toPositionData({ player: this, zone });
     }
 
-    return this;
-  }
-
-  addCharacter(card: RCGCard): this {
-    this.game.addCard(card);
-    this.characters.push(card.id);
-    return this;
-  }
-
-  endPhase(): RCGEndPhaseEvent {
-    return new RCGEndPhaseEvent(this.game, this);
-  }
-
-  getCharacters(): RCGCharacterCard[] {
-    return this.game.getCards(this.characters);
-  }
-
-  getDeck(): RCGCard[] {
-    return this.game.getCards(this.deck);
-  }
-
-  getExtraDeck(): RCGCard[] {
-    return this.game.getCards(this.extraDeck);
-  }
-
-  getHand(filter?: (card: RCGCard) => boolean): RCGCard[] {
-    return this.game.getCards(this.hand, filter);
-  }
-
-  getMainCharacter(): RCGCharacterCard | undefined {
-    const mainCharacterID = this.characters[0];
-    if (typeof mainCharacterID === "number")
-      return this.game.getCard(mainCharacterID);
-  }
-
-  getNextPlayer(): RCGPlayer | undefined {
-    const index = this.game.state.players.indexOf(this);
-    if (index !== -1)
-      return this.game.state.players[
-        // Use modulo to wrap around the array
-        (index + 1) % this.game.state.players.length
-      ];
-  }
-
-  getPreviousPlayer(): RCGPlayer | undefined {
-    const index = this.game.state.players.indexOf(this);
-    if (index !== -1)
-      return this.game.state.players[
-        // Use modulo to wrap around the array
-        (index - 1 + this.game.state.players.length) %
-          this.game.state.players.length
-      ];
-  }
-
-  getRecycleBin(): RCGCard[] {
-    return this.game.getCards(this.recycleBin);
-  }
-
-  mainPhase(): RCGMainPhaseEvent {
-    return new RCGMainPhaseEvent(this.game, this);
-  }
-
-  *request<TRequest extends RCGRequest<unknown>>(
-    request: TRequest,
-  ): Generator<
-    RCGRequests<TRequest>,
-    RCGResponse<TRequest>,
-    RCGRawResponses | undefined
-  > {
-    for (;;) {
-      const responses = yield* this.game.request(new Map([[this, request]]));
-      const response = responses.get(this);
-      if (response) return response;
+    if (!target) {
+      this[zone][side === CORE_BEFORE_SIDE ? "unshiftMany" : "pushMany"](
+        objects.map(({ id }) => id),
+      );
+      return objects.length;
     }
+
+    const node = this[zone].getNode(target.id);
+
+    if (!node) {
+      this[zone][side === CORE_BEFORE_SIDE ? "unshiftMany" : "pushMany"](
+        objects.map(({ id }) => id),
+      );
+      return objects.length;
+    }
+
+    if (side === CORE_BEFORE_SIDE)
+      for (const { id } of objects) {
+        this[zone].addBefore(node, id);
+      }
+    else
+      for (const { id } of objects.toReversed()) {
+        this[zone].addAfter(node, id);
+      }
+
+    return objects.length;
   }
 
-  startPhase(): RCGStartPhaseEvent {
-    return new RCGStartPhaseEvent(this.game, this);
+  mainPhase(): CoreEvent {
+    const options: CoreEventOptions = { ...(mainPhase as CoreEventOptions), player: this.id };
+    return this.game.state.run(new CoreEvent(this.game, options));
   }
 
-  toJSON(): RCGPlayerData {
-    const {
+  out(objects: CoreObject | CoreObject[]): number {
+    if (!Array.isArray(objects)) objects = [objects];
+    let count = 0;
+
+    for (const object of objects) {
+      switch (object.position?.zone) {
+        case CORE_DECK_ZONE:
+        case CORE_EXTRA_ZONE:
+        case CORE_HAND_ZONE:
+        case CORE_RECYCLE_ZONE:
+          if (!this[object.position.zone].delete(object.id)) continue;
+          delete object.position;
+          count++;
+      }
+    }
+
+    return count;
+  }
+
+  startPhase(): CoreEvent {
+    const options: CoreEventOptions = { ...(startPhase as CoreEventOptions), player: this.id };
+    return this.game.state.run(new CoreEvent(this.game, options));
+  }
+
+  turn(): CoreEvent {
+    const options: CoreEventOptions = { ...(turn as CoreEventOptions), player: this.id };
+    return this.game.state.run(new CoreEvent(this.game, options));
+  }
+
+  toJSON(): CorePlayerData {
+    const { characters, deck, extra, hand, id, integrity, recycle, starting, type } = this;
+    const data: CorePlayerData = {
       characters,
-      extraDeck,
-      deck,
-      hand,
+      deck: deck.toArray(),
+      extra: extra.toArray(),
+      hand: hand.toArray(),
+      id,
       integrity,
-      name,
-      recycleBin,
-      type,
-    } = this;
-    return {
-      characters,
-      extraDeck,
-      deck,
-      hand,
-      integrity,
-      name,
-      recycleBin,
+      recycle: recycle.toArray(),
+      starting,
       type,
     };
-  }
-
-  turn(): RCGTurnEvent {
-    return new RCGTurnEvent(this.game, this);
+    return data;
   }
 }

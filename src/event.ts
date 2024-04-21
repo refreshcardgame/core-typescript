@@ -1,170 +1,355 @@
-import { Queue } from "queue-typed";
-import { Stack } from "stack-typed";
-import { toShifted } from "./array.ts";
-import { getAvailableCommands, type RCGUseCommand } from "./command.ts";
-import type { RCGGame } from "./game.ts";
-import { wrap, type RCGProcess, type RCGSemiGenerator } from "./generator.ts";
-import type { RCGPlayer } from "./player.ts";
-import { capitalize } from "./string.ts";
-import type { RCGCharacterCard } from "./types/cards/character.ts";
+import { capitalize } from "lodash-es";
+import type { OverrideProperties, SetRequired } from "type-fest";
+import {
+  CORE_AFTER_EVENT_PHASE,
+  CORE_BEFORE_EVENT_PHASE,
+  CORE_EVENT_TYPE,
+  CORE_REGISTER_EVENT_PHASE,
+  CORE_RESOLVE_EVENT_PHASE,
+  type CoreAfterPhase,
+  type CoreBeforePhase,
+  type CoreEventType,
+  type CoreRegisterPhase,
+  type CoreResolvePhase,
+  type CoreSubPhase,
+} from "./constants/event.ts";
+import type { CoreGame } from "./game.ts";
+import type { CoreInstruction } from "./instruction.ts";
+import { evaluate } from "./instruction.ts";
+import { toRotated } from "./iterator.ts";
+import { isObtainablePayload, toTypedPayload, type CoreTypedPayload } from "./payload.ts";
+import type { CorePlayer } from "./player.ts";
+import {
+  validateResponse,
+  wrapResult,
+  type CoreRawResponse,
+  type CoreRequest,
+  type CoreResponse,
+  type CoreResponseFields,
+  type CoreRunner,
+  type CoreRunnerResult,
+} from "./runner.ts";
 
-export type RCGEventName = string;
-export type RCGTiming = string;
-export type RCGScope = string;
+export type CoreEventPayload = CoreTypedPayload<CoreEventType>;
+type CoreEventPhase =
+  | CoreAfterPhase
+  | CoreBeforePhase
+  | CoreRegisterPhase
+  | CoreResolvePhase
+  | CoreSubPhase;
 
-export class RCGEvent {
-  afterEvent: ((event: RCGEvent) => RCGSemiGenerator<RCGProcess>)[] = [];
-  aliases: string[] = [];
-  controller?: RCGCharacterCard | RCGPlayer;
-  children: RCGEvent[] = [];
-  finished = false;
-  game: RCGGame;
-  name: RCGEventName;
-  parent?: RCGEvent;
-  priorityPointer?: RCGPlayer;
-  process?: RCGProcess;
-  triggeredFrom: RCGTiming[] = [];
-  triggering: RCGTiming[] = [];
+export interface CoreSubEvent {
+  args: unknown[];
+  name: string;
+  previous: {
+    phase: CoreEventPhase;
+    step: number;
+  };
+}
+
+export interface CoreEventPriorityData {
+  passed: string[];
+  pointer?: string;
+  step: number;
+}
+
+export interface CoreEventData extends CoreEventPayload {
+  aliases: string[];
+  character?: string;
+  finished: boolean;
+  name: string;
+  phase: CoreEventPhase;
+  player?: string;
+  priority: CoreEventPriorityData;
+  register: CoreInstruction[];
+  request?: CoreRequest;
+  resolve: CoreInstruction[];
+  result?: boolean;
+  step: number;
+  timings: string[];
+  variables: Record<string, unknown>;
+}
+
+export type CoreEventPriority = OverrideProperties<CoreEventPriorityData, { passed: Set<string> }>;
+export type CoreEventOptions = SetRequired<
+  Partial<OverrideProperties<CoreEventData, { priority: Partial<CoreEventPriorityData> }>>,
+  "name"
+>;
+
+export class CoreEvent implements CoreRunner {
+  aliases: Set<string>;
+  character?: string;
+  game: CoreGame;
+  finished: boolean;
+  id: string;
+  name: string;
+  phase: CoreEventPhase;
+  player?: string;
+  priority: CoreEventPriority;
+  register: CoreInstruction[];
+  request?: CoreRequest;
+  resolve: CoreInstruction[];
+  result?: boolean;
+  step: number;
+  timings: string[];
+  type = CORE_EVENT_TYPE;
+  variables: Map<string, unknown>;
 
   constructor(
-    game: RCGGame,
-    name: RCGEventName,
-    controller?: RCGCharacterCard | RCGPlayer,
+    game: CoreGame,
+    {
+      aliases,
+      character,
+      finished,
+      id,
+      name,
+      phase,
+      player,
+      priority: { passed, step: priorityStep, pointer } = {},
+      register,
+      resolve,
+      result,
+      step,
+      timings,
+      variables,
+    }: CoreEventOptions,
   ) {
     this.game = game;
     this.name = name;
-    if (controller) this.controller = controller;
+    this.id = id ?? this.game.state.random.generateID(this.type, name);
+    this.aliases = new Set(aliases);
+    if (typeof character === "string") this.character = character;
+    this.finished = finished ?? false;
+    this.phase = phase ?? CORE_REGISTER_EVENT_PHASE;
+    if (typeof player === "string") this.player = player;
+    this.priority = { passed: new Set(passed), step: priorityStep ?? 0 };
+    if (typeof pointer === "string") this.priority.pointer = pointer;
+    this.register = register ?? [];
+    this.resolve = resolve ?? [];
+    if (typeof result === "boolean") this.result = result;
+    this.step = step ?? 0;
+    this.timings = timings ?? [];
+    this.variables = new Map(Object.entries(variables ?? {}).map(([key, value]) => [key, value]));
   }
 
-  getAllChildren<T extends RCGEvent>(
-    filter?: (event: RCGEvent) => event is T,
-    algorithm: "depth" | "breadth" = "depth",
-  ): T[] {
-    const result: T[] = [];
-
-    if (algorithm === "breadth") {
-      const queue = new Queue(this.children);
-
-      while (!queue.isEmpty()) {
-        const event = queue.shift();
-        if (!event) break;
-        if (!filter || filter(event)) result.push(event as T);
-        queue.pushMany(event.children);
-      }
-    } else {
-      const stack = new Stack(this.children);
-
-      while (!stack.isEmpty()) {
-        const event = stack.pop();
-        if (!event) break;
-        if (!filter || filter(event)) result.push(event as T);
-        const children = event.children.slice();
-        let child;
-
-        while ((child = children.pop())) {
-          stack.push(child);
-        }
-      }
-    }
-
-    return result;
+  getPlayer(): CorePlayer | undefined {
+    return this.game.state.getPlayer(this.player);
   }
 
-  getController(): RCGCharacterCard | undefined {
-    if (this.controller?.type === "card") return this.controller;
+  getPriorityPointer(): CorePlayer | undefined {
+    return this.game.state.getPlayer(this.priority.pointer);
   }
 
-  getPlayer(): RCGPlayer | undefined {
-    const player = this.getController()?.getController();
-    if (player) return player;
-    if (this.controller?.type === "player") return this.controller;
-  }
+  getResponse(rawResponse?: CoreRawResponse): CoreResponse {
+    const response: CoreResponse = {};
 
-  preResolve?(): RCGSemiGenerator<RCGProcess>;
+    for (const [player, fields] of Object.entries(this.request ?? {})) {
+      const responseFields: CoreResponseFields = (response[player] = {});
 
-  register?(): RCGSemiGenerator<RCGProcess>;
-
-  resolve?(): RCGSemiGenerator<RCGProcess>;
-
-  *run(): RCGProcess {
-    let result = true;
-    if (this.register) result = yield* wrap(this.register());
-
-    if (result) {
-      yield* this.trigger(
-        this.aliases
-          .concat(this.name)
-          .map((name) => `before${capitalize(name)}`),
-      );
-      if (this.preResolve) result = yield* wrap(this.preResolve());
-      if (this.resolve) result = yield* wrap(this.resolve());
-      yield* this.trigger(
-        this.aliases
-          .concat(this.name)
-          .map((name) => `after${capitalize(name)}`),
-      );
-    }
-
-    return result;
-  }
-
-  *trigger(timings: RCGTiming[]): RCGProcess {
-    const firstPriorityPointer =
-      this.game.getTurnPointer() ?? this.game.getStartingPointer();
-    if (!firstPriorityPointer) return false;
-    this.triggering.push(...timings);
-
-    for (const player of toShifted(
-      this.game.state.players,
-      firstPriorityPointer,
-    )) {
-      this.priorityPointer = player;
-
-      for (;;) {
-        const options = getAvailableCommands(this, player);
-
-        const { commands } = yield* player.request({
-          commands: { maximum: 1, minimum: 0, options },
+      for (const [field, { options }] of Object.entries(fields)) {
+        const rawFieldResponse = rawResponse?.[player]?.[field] ?? [];
+        responseFields[field] = rawFieldResponse.map((index) => {
+          let option = options[index];
+          if (isObtainablePayload(option)) option = this.game.state.get(option);
+          return option;
         });
-        const command = commands[0];
-        if (!command) break;
-        const [character, subcommand, args] = command;
-        // TypeScript type narrowing is not working properly here
-        const event = character[subcommand as RCGUseCommand[1]](
-          ...(args as RCGUseCommand[2]),
-        );
-        if (!event) continue;
-        event.aliases.push("command");
-        yield* event;
       }
     }
 
-    delete this.priorityPointer;
-    this.triggering.length = 0;
-    return true;
+    return response;
   }
 
-  *[Symbol.iterator](): RCGProcess {
-    const currentEvent = this.game.getCurrentEvent();
+  getVariable(name: string): unknown {
+    const variable = this.variables.get(name);
+    return isObtainablePayload(variable) ? this.game.state.get(variable) : variable;
+  }
 
-    if (currentEvent) {
-      currentEvent.children.push(this);
-      this.triggeredFrom.push(...currentEvent.triggering);
-      this.parent = currentEvent;
+  next(rawResponse?: CoreRawResponse): CoreRunnerResult {
+    if (this.finished) return wrapResult(this.result ?? true);
+    if (!validateResponse(this.request, rawResponse)) return wrapResult(this.request);
+    const response = this.getResponse(rawResponse);
+    delete this.request;
+    const result = this[`next${capitalize(this.phase)}`](response);
+    return result;
+  }
+
+  nextInstruction(instruction: CoreInstruction, response: CoreResponse): CoreRunnerResult {
+    this.step++;
+    evaluate(this, instruction, response);
+    return wrapResult(this.request);
+  }
+
+  nextAfter(response: CoreResponse): CoreRunnerResult {
+    const timings = this.aliases
+      .values()
+      .map((alias) => `${CORE_AFTER_EVENT_PHASE}${capitalize(alias)}`)
+      .toArray();
+    timings.push(`${CORE_AFTER_EVENT_PHASE}${capitalize(this.name)}`);
+    const result = this.trigger(timings, response);
+    if (!result.done) return result;
+    this.finished = true;
+    return wrapResult(this.result ?? true);
+  }
+
+  nextBefore(response: CoreResponse): CoreRunnerResult {
+    const timings = this.aliases
+      .values()
+      .map((alias) => `${CORE_BEFORE_EVENT_PHASE}${capitalize(alias)}`)
+      .toArray();
+    timings.push(`${CORE_BEFORE_EVENT_PHASE}${capitalize(this.name)}`);
+    const result = this.trigger(timings, response);
+    if (!result.done) return result;
+    this.phase = CORE_RESOLVE_EVENT_PHASE;
+    this.step = 0;
+    return wrapResult();
+  }
+
+  nextRegister(response: CoreResponse): CoreRunnerResult {
+    const instruction = this.register[this.step];
+
+    if (!instruction) {
+      this.phase = CORE_BEFORE_EVENT_PHASE;
+      this.step = 0;
+      return wrapResult();
     }
 
-    this.game.events.push(this);
-    this.process = this.run();
-    const result = yield* this.process;
-    delete this.process;
-    const index = this.game.events.indexOf(this);
-    if (index > -1) this.game.events.length = index;
-    this.finished = true;
+    const result = this.nextInstruction(instruction, response);
 
-    for (const callback of this.afterEvent) {
-      yield* wrap(callback(this));
+    if (this.result) {
+      this.phase = CORE_BEFORE_EVENT_PHASE;
+      delete this.result;
+      this.step = 0;
+      return wrapResult();
+    }
+
+    if (typeof this.result === "boolean") {
+      this.finished = true;
+      return wrapResult(false);
     }
 
     return result;
+  }
+
+  nextResolve(response: CoreResponse): CoreRunnerResult {
+    if (this.timings.length) {
+      const result = this.trigger(this.timings, response);
+      if (!result.done) return result;
+    }
+
+    const instruction = this.resolve[this.step];
+
+    if (!instruction) {
+      this.phase = CORE_AFTER_EVENT_PHASE;
+      this.result = true;
+      this.step = 0;
+      return wrapResult();
+    }
+
+    const result = this.nextInstruction(instruction, response);
+
+    if (typeof this.result === "boolean") {
+      this.phase = CORE_AFTER_EVENT_PHASE;
+      this.step = 0;
+      return wrapResult();
+    }
+
+    return result;
+  }
+
+  /** @todo */
+  nextSub(response: CoreResponse): CoreRunnerResult {
+    return wrapResult();
+  }
+
+  setVariable(name: string, value?: unknown): unknown {
+    if (typeof value === "undefined") this.variables.delete(name);
+    else this.variables.set(name, isObtainablePayload(value) ? toTypedPayload(value) : value);
+    return value;
+  }
+
+  toJSON(): CoreEventData {
+    const {
+      aliases,
+      character,
+      finished,
+      id,
+      name,
+      phase,
+      player,
+      priority: { passed, pointer, step: priorityStep },
+      register,
+      request,
+      resolve,
+      result,
+      step,
+      timings,
+      type,
+      variables,
+    } = this;
+    const data: CoreEventData = {
+      aliases: aliases.values().toArray(),
+      finished,
+      id,
+      name,
+      phase,
+      priority: {
+        passed: passed.values().toArray(),
+        step: priorityStep,
+      },
+      register,
+      resolve,
+      step,
+      timings,
+      type,
+      variables: Object.fromEntries(variables.entries().map(([key, value]) => [key, value])),
+    };
+    if (typeof character === "string") data.character = character;
+    if (typeof player === "string") data.player = player;
+    if (typeof pointer === "string") data.priority.pointer = pointer;
+    if (request) data.request = request;
+    if (typeof result === "boolean") data.result = result;
+    return data;
+  }
+
+  trigger(timings: string[], response: CoreResponse): CoreRunnerResult {
+    if (!this.priority.pointer) {
+      const firstPriorityPointer =
+        this.game.state.getTurnPointer() ?? this.game.state.getStartingPointer();
+      if (!firstPriorityPointer) return wrapResult(false);
+      this.priority.pointer = firstPriorityPointer.id;
+    }
+
+    switch (this.priority.step) {
+      case 0: {
+        const nextPriorityPointer = toRotated(
+          this.game.state.order,
+          this.priority.passed.values().find(Boolean) ?? this.priority.pointer,
+        ).find((player) => !this.priority.passed.has(player));
+
+        if (!nextPriorityPointer) {
+          delete this.priority.pointer;
+          this.priority.passed.clear();
+          this.timings.length = 0;
+          return wrapResult(true);
+        }
+
+        this.priority.pointer = nextPriorityPointer;
+        timings = timings.slice();
+        this.timings.length = 0;
+        this.timings.push(...timings);
+        /** @todo */
+        this.priority.step++;
+        return wrapResult(this.request);
+      }
+
+      case 1: {
+        /** @todo */
+        this.priority.passed.add(this.priority.pointer);
+        this.priority.step = 0;
+        return this.trigger(timings, response);
+      }
+    }
+
+    return wrapResult();
   }
 }
