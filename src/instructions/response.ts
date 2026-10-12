@@ -5,9 +5,9 @@ import {
   type CoreInstructionOrLiteral,
 } from "../instruction.ts";
 import { CorePlayer } from "../player.ts";
-import type { CoreType } from "../type.ts";
+import type { CoreTyped } from "../type.ts";
 
-export interface CoreResponseInstruction extends CoreType<CoreResponseInstructionType> {
+export interface CoreResponseInstruction extends CoreTyped<CoreResponseInstructionType> {
   player: CoreInstructionOrLiteral;
   field: CoreInstructionOrLiteral;
   index: CoreInstructionOrLiteral;

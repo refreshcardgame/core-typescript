@@ -7,9 +7,9 @@ import {
 } from "../instruction.ts";
 import { isObtainablePayload } from "../payload.ts";
 import { isPositionData } from "../position.ts";
-import type { CoreType } from "../type.ts";
+import type { CoreTyped } from "../type.ts";
 
-export interface CoreGetInstruction extends CoreType<CoreGetInstructionType> {
+export interface CoreGetInstruction extends CoreTyped<CoreGetInstructionType> {
   property: CoreInstructionOrLiteral;
   from: CoreInstructionOrLiteral;
 }

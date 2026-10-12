@@ -4,9 +4,9 @@ import {
   type CoreInstructionHandler,
   type CoreInstructionOrLiteral,
 } from "../instruction.ts";
-import type { CoreType } from "../type.ts";
+import type { CoreTyped } from "../type.ts";
 
-export interface CoreEqualInstruction extends CoreType<CoreEqualInstructionType> {
+export interface CoreEqualInstruction extends CoreTyped<CoreEqualInstructionType> {
   left: CoreInstructionOrLiteral;
   right: CoreInstructionOrLiteral;
 }

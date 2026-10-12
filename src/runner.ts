@@ -7,12 +7,13 @@ export interface CoreRequestField<TOption = unknown> extends CoreRange {
 
 export type CoreRequestFields<TOption = unknown> = Record<string, CoreRequestField<TOption>>;
 export type CoreRequest<TOption = unknown> = Record<string, CoreRequestFields<TOption>>;
-export type CoreRawResponse = Record<string, Record<string, number[]>>;
+export type CoreResponseFields<T = unknown> = Record<string, T[]>;
+export type CoreResponse = Record<string, CoreResponseFields>;
+export type CoreRawResponseFields = CoreResponseFields<number>;
+export type CoreRawResponse = Record<string, CoreRawResponseFields>;
 export type CoreRunner = Iterator<CoreRequest, boolean, CoreRawResponse>;
 export type CoreRunnerResult =
   CoreRunner extends Iterator<infer T, infer TReturn> ? IteratorResult<T, TReturn> : never;
-export type CoreResponseFields<T = unknown> = Record<string, T[]>;
-export type CoreResponse = Record<string, CoreResponseFields>;
 
 export function validateResponse(
   request: CoreRequest = {},

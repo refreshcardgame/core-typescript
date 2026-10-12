@@ -11,7 +11,6 @@ import {
   type CoreEventType,
   type CoreRegisterPhase,
   type CoreResolvePhase,
-  type CoreSubPhase,
 } from "./constants/event.ts";
 import type { CoreGame } from "./game.ts";
 import type { CoreInstruction } from "./instruction.ts";
@@ -31,21 +30,7 @@ import {
 } from "./runner.ts";
 
 export type CoreEventPayload = CoreTypedPayload<CoreEventType>;
-type CoreEventPhase =
-  | CoreAfterPhase
-  | CoreBeforePhase
-  | CoreRegisterPhase
-  | CoreResolvePhase
-  | CoreSubPhase;
-
-export interface CoreSubEvent {
-  args: unknown[];
-  name: string;
-  previous: {
-    phase: CoreEventPhase;
-    step: number;
-  };
-}
+type CoreEventPhase = CoreAfterPhase | CoreBeforePhase | CoreRegisterPhase | CoreResolvePhase;
 
 export interface CoreEventPriorityData {
   passed: string[];
@@ -254,11 +239,6 @@ export class CoreEvent implements CoreRunner {
     }
 
     return result;
-  }
-
-  /** @todo */
-  nextSub(response: CoreResponse): CoreRunnerResult {
-    return wrapResult();
   }
 
   setVariable(name: string, value?: unknown): unknown {

@@ -6,11 +6,11 @@ import type {
 } from "../constants/instruction.ts";
 import { evaluate, type CoreInstruction, type CoreInstructionHandler } from "../instruction.ts";
 import { CorePlayer } from "../player.ts";
-import type { CoreType } from "../type.ts";
+import type { CoreTyped } from "../type.ts";
 
 export type CorePhaseName = CoreEndPhaseName | CoreMainPhaseName | CoreStartPhaseName;
 
-export interface CorePhaseInstruction extends CoreType<CorePhaseInstructionType> {
+export interface CorePhaseInstruction extends CoreTyped<CorePhaseInstructionType> {
   name: CorePhaseName;
   player: CoreInstruction;
 }

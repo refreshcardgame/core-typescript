@@ -1,3 +1,3 @@
-export interface CoreType<TType extends string> {
+export interface CoreTyped<TType extends string> {
   type: TType;
 }

@@ -1,5 +1,6 @@
 import { DoublyLinkedList } from "data-structure-typed";
 import type { SetRequired } from "type-fest";
+import { Type } from "typebox";
 import {
   CORE_INITIAL_PLAYER_INTEGRITY,
   CORE_PLAYER_TYPE,
@@ -25,11 +26,13 @@ import { toPositionData, type CoreObjectIndex, type CorePlayerZone } from "./pos
 
 export type CorePlayerPayload = CoreTypedPayload<CorePlayerType>;
 
-export interface CorePlayerStarting {
-  characters: number[];
-  deck: string[];
-  extra: string[];
-}
+export const CorePlayerStarting = Type.Object({
+  characters: Type.Array(Type.Number()),
+  deck: Type.Array(Type.String()),
+  extra: Type.Array(Type.String()),
+});
+
+export type CorePlayerStarting = Type.Static<typeof CorePlayerStarting>;
 
 export interface CorePlayerData extends CorePlayerPayload {
   characters: string[];

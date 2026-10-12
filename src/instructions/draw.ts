@@ -9,14 +9,14 @@ import {
 import { takeRight } from "../iterator.ts";
 import { CorePlayer } from "../player.ts";
 import type { CoreDestination } from "../position.ts";
-import type { CoreType } from "../type.ts";
+import type { CoreTyped } from "../type.ts";
 
-export interface CoreSingleDrawInstruction extends CoreType<CoreDrawInstructionType> {
+export interface CoreSingleDrawInstruction extends CoreTyped<CoreDrawInstructionType> {
   player: CoreInstruction;
   count: CoreInstructionOrLiteral;
 }
 
-export interface CoreMultipleDrawInstruction extends CoreType<CoreDrawInstructionType> {
+export interface CoreMultipleDrawInstruction extends CoreTyped<CoreDrawInstructionType> {
   players: CoreInstruction;
   each?: CoreInstructionOrLiteral;
   count: CoreInstructionOrLiteral;

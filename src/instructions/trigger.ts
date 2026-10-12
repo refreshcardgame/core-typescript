@@ -1,9 +1,9 @@
 import { CORE_RESOLVE_EVENT_PHASE } from "../constants/event.ts";
 import type { CoreTriggerInstructionType } from "../constants/instruction.ts";
 import { evaluate, type CoreInstruction, type CoreInstructionHandler } from "../instruction.ts";
-import type { CoreType } from "../type.ts";
+import type { CoreTyped } from "../type.ts";
 
-export interface CoreTriggerInstruction extends CoreType<CoreTriggerInstructionType> {
+export interface CoreTriggerInstruction extends CoreTyped<CoreTriggerInstructionType> {
   timings: CoreInstruction[];
 }
 

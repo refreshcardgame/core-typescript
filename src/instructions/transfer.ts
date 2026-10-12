@@ -1,9 +1,9 @@
 import type { CoreTransferInstructionType } from "../constants/instruction.ts";
 import { evaluate, type CoreInstruction, type CoreInstructionHandler } from "../instruction.ts";
 import { isDestinationData } from "../position.ts";
-import type { CoreType } from "../type.ts";
+import type { CoreTyped } from "../type.ts";
 
-export interface CoreTransferInstruction extends CoreType<CoreTransferInstructionType> {
+export interface CoreTransferInstruction extends CoreTyped<CoreTransferInstructionType> {
   destinations: CoreInstruction;
 }
 

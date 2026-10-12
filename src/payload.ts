@@ -3,13 +3,13 @@ import { CORE_EVENT_TYPE } from "./constants/event.ts";
 import { CORE_OBJECT_TYPE } from "./constants/object.ts";
 import { CORE_PLAYER_TYPE } from "./constants/player.ts";
 import type { CoreState } from "./state.ts";
-import type { CoreType } from "./type.ts";
+import type { CoreTyped } from "./type.ts";
 
 export interface CorePayload {
   id: string;
 }
 
-export interface CoreTypedPayload<TType extends string> extends CorePayload, CoreType<TType> {}
+export interface CoreTypedPayload<TType extends string> extends CorePayload, CoreTyped<TType> {}
 
 export type CoreObtainable = {
   [K in keyof CoreState]: K extends `${string}s`
