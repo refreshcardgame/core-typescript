@@ -1,14 +1,15 @@
 import { capitalize } from "lodash-es";
 import type { OverrideProperties, SetRequired } from "type-fest";
+import { Type } from "typebox";
 import {
   CORE_AFTER_EVENT_PHASE,
   CORE_BEFORE_EVENT_PHASE,
   CORE_EVENT_TYPE,
   CORE_REGISTER_EVENT_PHASE,
   CORE_RESOLVE_EVENT_PHASE,
+  CoreEventType,
   type CoreAfterPhase,
   type CoreBeforePhase,
-  type CoreEventType,
   type CoreRegisterPhase,
   type CoreResolvePhase,
 } from "./constants/event.ts";
@@ -16,7 +17,7 @@ import type { CoreGame } from "./game.ts";
 import type { CoreInstruction } from "./instruction.ts";
 import { evaluate } from "./instruction.ts";
 import { toRotated } from "./iterator.ts";
-import { isObtainablePayload, toTypedPayload, type CoreTypedPayload } from "./payload.ts";
+import { CoreTypedPayload, isObtainablePayload, toTypedPayload } from "./payload.ts";
 import type { CorePlayer } from "./player.ts";
 import {
   validateResponse,
@@ -29,14 +30,15 @@ import {
   type CoreRunnerResult,
 } from "./runner.ts";
 
-export type CoreEventPayload = CoreTypedPayload<CoreEventType>;
+export const CoreEventPayload = Type.Call(CoreTypedPayload, [CoreEventType]);
+export type CoreEventPayload = Type.Static<typeof CoreEventPayload>;
 type CoreEventPhase = CoreAfterPhase | CoreBeforePhase | CoreRegisterPhase | CoreResolvePhase;
-
-export interface CoreEventPriorityData {
-  passed: string[];
-  pointer?: string;
-  step: number;
-}
+export const CoreEventPriorityData = Type.Object({
+  passed: Type.Array(Type.String()),
+  pointer: Type.Optional(Type.String()),
+  step: Type.Number(),
+});
+export type CoreEventPriorityData = Type.Static<typeof CoreEventPriorityData>;
 
 export interface CoreEventData extends CoreEventPayload {
   aliases: string[];

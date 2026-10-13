@@ -1,15 +1,19 @@
-import type { CoreGreaterInstructionType } from "../constants/instruction.ts";
+import { Type } from "typebox";
+import { CoreGreaterInstructionType } from "../constants/instruction.ts";
 import {
+  CoreInstructionDefs,
+  CoreRawInstructionOrLiteralRef,
   evaluate,
   type CoreInstructionHandler,
-  type CoreInstructionOrLiteral,
 } from "../instruction.ts";
-import type { CoreTyped } from "../type.ts";
+import { CoreTyped } from "../typed.ts";
 
-export interface CoreGreaterInstruction extends CoreTyped<CoreGreaterInstructionType> {
-  left: CoreInstructionOrLiteral;
-  right: CoreInstructionOrLiteral;
-}
+export const CoreRawGreaterInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [CoreGreaterInstructionType])],
+  { left: CoreRawInstructionOrLiteralRef, right: CoreRawInstructionOrLiteralRef },
+);
+export const CoreGreaterInstruction = Type.Cyclic(CoreInstructionDefs, "CoreRawGreaterInstruction");
+export type CoreGreaterInstruction = Type.Static<typeof CoreGreaterInstruction>;
 
 export const greater: CoreInstructionHandler<CoreGreaterInstruction> = (
   event,

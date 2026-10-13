@@ -1,19 +1,42 @@
+import { Type } from "typebox";
 import type { CoreEvent } from "./event.ts";
-import { add, type CoreAddInstruction } from "./instructions/add.ts";
-import { and, type CoreAndInstruction } from "./instructions/and.ts";
-import { draw, type CoreDrawInstruction } from "./instructions/draw.ts";
-import { equal, type CoreEqualInstruction } from "./instructions/equal.ts";
-import { forHandler, type CoreForInstruction } from "./instructions/for.ts";
-import { get, type CoreGetInstruction } from "./instructions/get.ts";
-import { goto, type CoreGotoInstruction } from "./instructions/goto.ts";
-import { greater, type CoreGreaterInstruction } from "./instructions/greater.ts";
-import { ifHandler, type CoreIfInstruction } from "./instructions/if.ts";
-import { less, type CoreLessInstruction } from "./instructions/less.ts";
-import { map as flatMap, map, type CoreMapInstruction } from "./instructions/map.ts";
-import { multiply, type CoreMultiplyInstruction } from "./instructions/multiply.ts";
-import { notEqual, type CoreNotEqualInstruction } from "./instructions/not-equal.ts";
-import { not, type CoreNotInstruction } from "./instructions/not.ts";
-import { or, type CoreOrInstruction } from "./instructions/or.ts";
+import { add, CoreRawAddInstruction, type CoreAddInstruction } from "./instructions/add.ts";
+import { and, CoreRawAndInstruction, type CoreAndInstruction } from "./instructions/and.ts";
+import {
+  CoreRawMultipleDrawInstruction,
+  CoreRawSingleDrawInstruction,
+  draw,
+  type CoreDrawInstruction,
+} from "./instructions/draw.ts";
+import { CoreRawEqualInstruction, equal, type CoreEqualInstruction } from "./instructions/equal.ts";
+import { CoreRawForInstruction, forHandler, type CoreForInstruction } from "./instructions/for.ts";
+import { CoreRawGetInstruction, get, type CoreGetInstruction } from "./instructions/get.ts";
+import { CoreRawGotoInstruction, goto, type CoreGotoInstruction } from "./instructions/goto.ts";
+import {
+  CoreRawGreaterInstruction,
+  greater,
+  type CoreGreaterInstruction,
+} from "./instructions/greater.ts";
+import { CoreRawIfInstruction, ifHandler, type CoreIfInstruction } from "./instructions/if.ts";
+import { CoreRawLessInstruction, less, type CoreLessInstruction } from "./instructions/less.ts";
+import {
+  CoreRawMapInstruction,
+  map as flatMap,
+  map,
+  type CoreMapInstruction,
+} from "./instructions/map.ts";
+import {
+  CoreRawMultiplyInstruction,
+  multiply,
+  type CoreMultiplyInstruction,
+} from "./instructions/multiply.ts";
+import {
+  CoreRawNotEqualInstruction,
+  notEqual,
+  type CoreNotEqualInstruction,
+} from "./instructions/not-equal.ts";
+import { CoreRawNotInstruction, not, type CoreNotInstruction } from "./instructions/not.ts";
+import { CoreRawOrInstruction, or, type CoreOrInstruction } from "./instructions/or.ts";
 import { phase, type CorePhaseInstruction } from "./instructions/phase.ts";
 import { player, type CorePlayerInstruction } from "./instructions/player.ts";
 import { players, type CorePlayersInstruction } from "./instructions/players.ts";
@@ -29,6 +52,55 @@ import { variable, type CoreVariableInstruction } from "./instructions/variable.
 import { whileHandler, type CoreWhileInstruction } from "./instructions/while.ts";
 import type { CoreResponse } from "./runner.ts";
 
+export const CoreRawInstructionRef = Type.Ref("CoreRawInstruction");
+export const CoreRawInstructionOrLiteralRef = Type.Ref("CoreRawInstructionOrLiteral");
+export const CoreInstructionDefs = {
+  CoreRawAddInstruction,
+  CoreRawAndInstruction,
+  CoreRawEqualInstruction,
+  CoreRawForInstruction,
+  CoreRawGetInstruction,
+  CoreRawGotoInstruction,
+  CoreRawGreaterInstruction,
+  CoreRawIfInstruction,
+  CoreRawLessInstruction,
+  CoreRawMapInstruction,
+  CoreRawMultipleDrawInstruction,
+  CoreRawMultiplyInstruction,
+  CoreRawNotEqualInstruction,
+  CoreRawNotInstruction,
+  CoreRawOrInstruction,
+  CoreRawSingleDrawInstruction,
+  CoreRawInstruction: Type.Union([
+    Type.Ref("CoreRawAddInstruction"),
+    Type.Ref("CoreRawAndInstruction"),
+    Type.Ref("CoreRawEqualInstruction"),
+    Type.Ref("CoreRawForInstruction"),
+    Type.Ref("CoreRawGetInstruction"),
+    Type.Ref("CoreRawGotoInstruction"),
+    Type.Ref("CoreRawGreaterInstruction"),
+    Type.Ref("CoreRawIfInstruction"),
+    Type.Ref("CoreRawLessInstruction"),
+    Type.Ref("CoreRawMapInstruction"),
+    Type.Ref("CoreRawMultipleDrawInstruction"),
+    Type.Ref("CoreRawMultiplyInstruction"),
+    Type.Ref("CoreRawNotEqualInstruction"),
+    Type.Ref("CoreRawNotInstruction"),
+    Type.Ref("CoreRawOrInstruction"),
+    Type.Ref("CoreRawSingleDrawInstruction"),
+  ]),
+  CoreRawInstructionOrLiteral: Type.Union([
+    Type.String(),
+    Type.Number(),
+    Type.Boolean(),
+    CoreRawInstructionRef,
+  ]),
+} satisfies Type.TProperties;
+export const CoreInstruction = Type.Cyclic(CoreInstructionDefs, "CoreRawInstruction");
+export const CoreInstructionOrLiteral = Type.Cyclic(
+  CoreInstructionDefs,
+  "CoreRawInstructionOrLiteral",
+);
 export type CoreInstruction =
   | CoreAddInstruction
   | CoreAndInstruction

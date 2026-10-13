@@ -6,7 +6,7 @@ import type {
 } from "../constants/instruction.ts";
 import { evaluate, type CoreInstruction, type CoreInstructionHandler } from "../instruction.ts";
 import { CorePlayer } from "../player.ts";
-import type { CoreTyped } from "../type.ts";
+import type { CoreTyped } from "../typed.ts";
 
 export type CorePhaseName = CoreEndPhaseName | CoreMainPhaseName | CoreStartPhaseName;
 

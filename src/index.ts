@@ -13,7 +13,7 @@ export * from "./position.ts";
 export * from "./random.ts";
 export * from "./runner.ts";
 export * from "./state.ts";
-export * from "./type.ts";
+export * from "./typed.ts";
 
 // Export constants submodules
 export * from "./constants/card.ts";
@@ -23,6 +23,7 @@ export * from "./constants/instruction.ts";
 export * from "./constants/object.ts";
 export * from "./constants/player.ts";
 export * from "./constants/position.ts";
+export * from "./constants/typed.ts";
 
 // Export instructions submodules
 export * from "./instructions/add.ts";

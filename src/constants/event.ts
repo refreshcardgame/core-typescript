@@ -1,3 +1,5 @@
+import { Type } from "typebox";
+
 export const CORE_EVENT_TYPE = "event" as const;
 
 export const CORE_ROUND_EVENT_NAME = "round" as const;
@@ -9,7 +11,8 @@ export const CORE_REGISTER_EVENT_PHASE = "register" as const;
 export const CORE_RESOLVE_EVENT_PHASE = "resolve" as const;
 export const CORE_SUB_EVENT_PHASE = "sub" as const;
 
-export type CoreEventType = typeof CORE_EVENT_TYPE;
+export const CoreEventType = Type.Literal(CORE_EVENT_TYPE);
+export type CoreEventType = Type.Static<typeof CoreEventType>;
 
 export type CoreRoundName = typeof CORE_ROUND_EVENT_NAME;
 export type CoreTurnName = typeof CORE_TURN_EVENT_NAME;

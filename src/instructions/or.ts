@@ -1,15 +1,19 @@
-import type { CoreOrInstructionType } from "../constants/instruction.ts";
+import { Type } from "typebox";
+import { CoreOrInstructionType } from "../constants/instruction.ts";
 import {
+  CoreInstructionDefs,
+  CoreRawInstructionOrLiteralRef,
   evaluate,
   type CoreInstructionHandler,
-  type CoreInstructionOrLiteral,
 } from "../instruction.ts";
-import type { CoreTyped } from "../type.ts";
+import { CoreTyped } from "../typed.ts";
 
-export interface CoreOrInstruction extends CoreTyped<CoreOrInstructionType> {
-  left: CoreInstructionOrLiteral;
-  right: CoreInstructionOrLiteral;
-}
+export const CoreRawOrInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [CoreOrInstructionType])],
+  { left: CoreRawInstructionOrLiteralRef, right: CoreRawInstructionOrLiteralRef },
+);
+export const CoreOrInstruction = Type.Cyclic(CoreInstructionDefs, "CoreRawOrInstruction");
+export type CoreOrInstruction = Type.Static<typeof CoreOrInstruction>;
 
 export const or: CoreInstructionHandler<CoreOrInstruction> = (event, { left, right }, response) =>
   // oxlint-disable-next-line typescript/prefer-nullish-coalescing

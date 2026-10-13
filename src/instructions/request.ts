@@ -6,7 +6,7 @@ import {
 } from "../instruction.ts";
 import { isObtainablePayload, toTypedPayload } from "../payload.ts";
 import type { CoreRequest, CoreRequestFields } from "../runner.ts";
-import type { CoreTyped } from "../type.ts";
+import type { CoreTyped } from "../typed.ts";
 
 export interface CoreRequestInstruction extends CoreTyped<CoreRequestInstructionType> {
   request: CoreRequest<CoreInstructionOrLiteral>;

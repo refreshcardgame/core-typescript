@@ -4,7 +4,7 @@ import { Type } from "typebox";
 import {
   CORE_INITIAL_PLAYER_INTEGRITY,
   CORE_PLAYER_TYPE,
-  type CorePlayerType,
+  CorePlayerType,
 } from "./constants/player.ts";
 import {
   CORE_AFTER_SIDE,
@@ -21,29 +21,27 @@ import startPhase from "./events/phases/start.json" with { type: "json" };
 import turn from "./events/turn.json" with { type: "json" };
 import type { CoreGame } from "./game.ts";
 import type { CoreObject } from "./object.ts";
-import type { CoreTypedPayload } from "./payload.ts";
+import { CoreTypedPayload } from "./payload.ts";
 import { toPositionData, type CoreObjectIndex, type CorePlayerZone } from "./position.ts";
 
-export type CorePlayerPayload = CoreTypedPayload<CorePlayerType>;
-
+export const CorePlayerPayload = Type.Call(CoreTypedPayload, [CorePlayerType]);
+export type CorePlayerPayload = Type.Static<typeof CorePlayerPayload>;
 export const CorePlayerStarting = Type.Object({
   characters: Type.Array(Type.Number()),
   deck: Type.Array(Type.String()),
   extra: Type.Array(Type.String()),
 });
-
 export type CorePlayerStarting = Type.Static<typeof CorePlayerStarting>;
-
-export interface CorePlayerData extends CorePlayerPayload {
-  characters: string[];
-  deck: string[];
-  extra: string[];
-  hand: string[];
-  integrity: number;
-  recycle: string[];
-  starting: CorePlayerStarting;
-}
-
+export const CorePlayerData = Type.Interface([CorePlayerPayload], {
+  characters: Type.Array(Type.String()),
+  deck: Type.Array(Type.String()),
+  extra: Type.Array(Type.String()),
+  hand: Type.Array(Type.String()),
+  integrity: Type.Number(),
+  recycle: Type.Array(Type.String()),
+  starting: CorePlayerStarting,
+});
+export type CorePlayerData = Type.Static<typeof CorePlayerData>;
 export type CorePlayerOptions = SetRequired<Partial<CorePlayerData>, "id" | "starting">;
 
 export class CorePlayer {

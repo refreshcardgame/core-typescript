@@ -1,23 +1,28 @@
+import { Type } from "typebox";
 import {
   CORE_FLAT_MAP_INSTRUCTION_TYPE,
-  type CoreFlatMapInstructionType,
-  type CoreMapInstructionType,
+  CoreFlatMapInstructionType,
+  CoreMapInstructionType,
 } from "../constants/instruction.ts";
 import {
+  CoreInstructionDefs,
+  CoreRawInstructionOrLiteralRef,
+  CoreRawInstructionRef,
   evaluate,
-  type CoreInstruction,
   type CoreInstructionHandler,
-  type CoreInstructionOrLiteral,
 } from "../instruction.ts";
-import type { CoreTyped } from "../type.ts";
+import { CoreTyped } from "../typed.ts";
 
-export interface CoreMapInstruction extends CoreTyped<
-  CoreFlatMapInstructionType | CoreMapInstructionType
-> {
-  each: CoreInstructionOrLiteral;
-  of: CoreInstruction;
-  to: CoreInstructionOrLiteral;
-}
+export const CoreRawMapInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [Type.Union([CoreFlatMapInstructionType, CoreMapInstructionType])])],
+  {
+    each: CoreRawInstructionOrLiteralRef,
+    of: CoreRawInstructionRef,
+    to: CoreRawInstructionOrLiteralRef,
+  },
+);
+export const CoreMapInstruction = Type.Cyclic(CoreInstructionDefs, "CoreRawMapInstruction");
+export type CoreMapInstruction = Type.Static<typeof CoreMapInstruction>;
 
 export const map: CoreInstructionHandler<CoreMapInstruction> = (
   event,

@@ -1,17 +1,20 @@
-import type { CoreForInstructionType } from "../constants/instruction.ts";
+import { Type } from "typebox";
+import { CoreForInstructionType } from "../constants/instruction.ts";
 import {
+  CoreInstructionDefs,
+  CoreRawInstructionOrLiteralRef,
+  CoreRawInstructionRef,
   evaluate,
-  type CoreInstruction,
   type CoreInstructionHandler,
-  type CoreInstructionOrLiteral,
 } from "../instruction.ts";
-import type { CoreTyped } from "../type.ts";
+import { CoreTyped } from "../typed.ts";
 
-export interface CoreForInstruction extends CoreTyped<CoreForInstructionType> {
-  each: CoreInstructionOrLiteral;
-  of: CoreInstruction;
-  do?: CoreInstruction;
-}
+export const CoreRawForInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [CoreForInstructionType])],
+  { each: CoreRawInstructionOrLiteralRef, of: CoreRawInstructionRef, do: CoreRawInstructionRef },
+);
+export const CoreForInstruction = Type.Cyclic(CoreInstructionDefs, "CoreRawForInstruction");
+export type CoreForInstruction = Type.Static<typeof CoreForInstruction>;
 
 export const forHandler: CoreInstructionHandler<CoreForInstruction> = (
   event,

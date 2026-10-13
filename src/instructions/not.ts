@@ -1,14 +1,19 @@
-import type { CoreNotInstructionType } from "../constants/instruction.ts";
+import { Type } from "typebox";
+import { CoreNotInstructionType } from "../constants/instruction.ts";
 import {
+  CoreInstructionDefs,
+  CoreRawInstructionOrLiteralRef,
   evaluate,
   type CoreInstructionHandler,
-  type CoreInstructionOrLiteral,
 } from "../instruction.ts";
-import type { CoreTyped } from "../type.ts";
+import { CoreTyped } from "../typed.ts";
 
-export interface CoreNotInstruction extends CoreTyped<CoreNotInstructionType> {
-  value: CoreInstructionOrLiteral;
-}
+export const CoreRawNotInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [CoreNotInstructionType])],
+  { value: CoreRawInstructionOrLiteralRef },
+);
+export const CoreNotInstruction = Type.Cyclic(CoreInstructionDefs, "CoreRawNotInstruction");
+export type CoreNotInstruction = Type.Static<typeof CoreNotInstruction>;
 
 export const not: CoreInstructionHandler<CoreNotInstruction> = (event, { value }, response) =>
   !evaluate(event, value, response);

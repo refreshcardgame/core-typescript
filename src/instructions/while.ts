@@ -1,6 +1,6 @@
 import type { CoreWhileInstructionType } from "../constants/instruction.ts";
 import { evaluate, type CoreInstruction, type CoreInstructionHandler } from "../instruction.ts";
-import type { CoreTyped } from "../type.ts";
+import type { CoreTyped } from "../typed.ts";
 
 export interface CoreWhileInstruction extends CoreTyped<CoreWhileInstructionType> {
   condition: CoreInstruction;

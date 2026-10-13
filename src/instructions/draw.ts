@@ -1,28 +1,43 @@
-import type { CoreDrawInstructionType } from "../constants/instruction.ts";
+import { Type } from "typebox";
+import { CoreDrawInstructionType } from "../constants/instruction.ts";
 import { CORE_HAND_ZONE } from "../constants/position.ts";
 import {
+  CoreInstructionDefs,
+  CoreRawInstructionOrLiteralRef,
+  CoreRawInstructionRef,
   evaluate,
-  type CoreInstruction,
   type CoreInstructionHandler,
-  type CoreInstructionOrLiteral,
 } from "../instruction.ts";
 import { takeRight } from "../iterator.ts";
 import { CorePlayer } from "../player.ts";
 import type { CoreDestination } from "../position.ts";
-import type { CoreTyped } from "../type.ts";
+import { CoreTyped } from "../typed.ts";
 
-export interface CoreSingleDrawInstruction extends CoreTyped<CoreDrawInstructionType> {
-  player: CoreInstruction;
-  count: CoreInstructionOrLiteral;
-}
-
-export interface CoreMultipleDrawInstruction extends CoreTyped<CoreDrawInstructionType> {
-  players: CoreInstruction;
-  each?: CoreInstructionOrLiteral;
-  count: CoreInstructionOrLiteral;
-}
-
-export type CoreDrawInstruction = CoreMultipleDrawInstruction | CoreSingleDrawInstruction;
+export const CoreRawSingleDrawInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [CoreDrawInstructionType])],
+  { player: CoreRawInstructionRef, count: CoreRawInstructionOrLiteralRef },
+);
+export const CoreSingleDrawInstruction = Type.Cyclic(
+  CoreInstructionDefs,
+  "CoreRawSingleDrawInstruction",
+);
+export const CoreRawMultipleDrawInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [CoreDrawInstructionType])],
+  {
+    players: CoreRawInstructionRef,
+    each: Type.Optional(CoreRawInstructionOrLiteralRef),
+    count: CoreRawInstructionOrLiteralRef,
+  },
+);
+export const CoreMultipleDrawInstruction = Type.Cyclic(
+  CoreInstructionDefs,
+  "CoreRawMultipleDrawInstruction",
+);
+export const CoreDrawInstruction = Type.Union([
+  CoreSingleDrawInstruction,
+  CoreMultipleDrawInstruction,
+]);
+export type CoreDrawInstruction = Type.Static<typeof CoreDrawInstruction>;
 
 export const draw: CoreInstructionHandler<CoreDrawInstruction> = (event, instruction, response) => {
   if ("player" in instruction) {
