@@ -1,15 +1,25 @@
-import type { CoreVariableInstructionType } from "../constants/instruction.ts";
+import { Type } from "typebox";
+import { CoreVariableInstructionType } from "../constants/instruction.ts";
 import {
+  CoreCyclicInstructionOrLiteralRef,
+  CoreInstructionDefs,
   evaluate,
   type CoreInstructionHandler,
-  type CoreInstructionOrLiteral,
 } from "../instruction.ts";
-import type { CoreTyped } from "../typed.ts";
+import { CoreTyped } from "../type.ts";
 
-export interface CoreVariableInstruction extends CoreTyped<CoreVariableInstructionType> {
-  name: CoreInstructionOrLiteral;
-  set?: CoreInstructionOrLiteral;
-}
+export const CoreCyclicVariableInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [CoreVariableInstructionType])],
+  {
+    name: CoreCyclicInstructionOrLiteralRef,
+    set: Type.Optional(CoreCyclicInstructionOrLiteralRef),
+  },
+);
+export const CoreVariableInstruction = Type.Cyclic(
+  CoreInstructionDefs,
+  "CoreCyclicVariableInstruction",
+);
+export type CoreVariableInstruction = Type.Static<typeof CoreVariableInstruction>;
 
 export const variable: CoreInstructionHandler<CoreVariableInstruction> = (
   event,

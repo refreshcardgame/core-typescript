@@ -1,19 +1,28 @@
-import type {
+import { Type } from "typebox";
+import {
   CoreEndPhaseName,
   CoreMainPhaseName,
   CorePhaseInstructionType,
   CoreStartPhaseName,
 } from "../constants/instruction.ts";
-import { evaluate, type CoreInstruction, type CoreInstructionHandler } from "../instruction.ts";
+import {
+  CoreCyclicInstructionRef,
+  CoreInstructionDefs,
+  evaluate,
+  type CoreInstructionHandler,
+} from "../instruction.ts";
 import { CorePlayer } from "../player.ts";
-import type { CoreTyped } from "../typed.ts";
+import { CoreTyped } from "../type.ts";
 
-export type CorePhaseName = CoreEndPhaseName | CoreMainPhaseName | CoreStartPhaseName;
-
-export interface CorePhaseInstruction extends CoreTyped<CorePhaseInstructionType> {
-  name: CorePhaseName;
-  player: CoreInstruction;
-}
+export const CoreCyclicPhaseInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [CorePhaseInstructionType])],
+  {
+    name: Type.Union([CoreEndPhaseName, CoreMainPhaseName, CoreStartPhaseName]),
+    player: CoreCyclicInstructionRef,
+  },
+);
+export const CorePhaseInstruction = Type.Cyclic(CoreInstructionDefs, "CoreCyclicPhaseInstruction");
+export type CorePhaseInstruction = Type.Static<typeof CorePhaseInstruction>;
 
 export const phase: CoreInstructionHandler<CorePhaseInstruction> = (
   event,

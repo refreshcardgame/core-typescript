@@ -1,11 +1,19 @@
-import type { CoreWhileInstructionType } from "../constants/instruction.ts";
-import { evaluate, type CoreInstruction, type CoreInstructionHandler } from "../instruction.ts";
-import type { CoreTyped } from "../typed.ts";
+import { Type } from "typebox";
+import { CoreWhileInstructionType } from "../constants/instruction.ts";
+import {
+  CoreCyclicInstructionRef,
+  CoreInstructionDefs,
+  evaluate,
+  type CoreInstructionHandler,
+} from "../instruction.ts";
+import { CoreTyped } from "../type.ts";
 
-export interface CoreWhileInstruction extends CoreTyped<CoreWhileInstructionType> {
-  condition: CoreInstruction;
-  do?: CoreInstruction;
-}
+export const CoreCyclicWhileInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [CoreWhileInstructionType])],
+  { condition: CoreCyclicInstructionRef, do: Type.Optional(CoreCyclicInstructionRef) },
+);
+export const CoreWhileInstruction = Type.Cyclic(CoreInstructionDefs, "CoreCyclicWhileInstruction");
+export type CoreWhileInstruction = Type.Static<typeof CoreWhileInstruction>;
 
 export const whileHandler: CoreInstructionHandler<CoreWhileInstruction> = (
   event,

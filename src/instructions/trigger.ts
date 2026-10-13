@@ -1,11 +1,23 @@
+import { Type } from "typebox";
 import { CORE_RESOLVE_EVENT_PHASE } from "../constants/event.ts";
-import type { CoreTriggerInstructionType } from "../constants/instruction.ts";
-import { evaluate, type CoreInstruction, type CoreInstructionHandler } from "../instruction.ts";
-import type { CoreTyped } from "../typed.ts";
+import { CoreTriggerInstructionType } from "../constants/instruction.ts";
+import {
+  CoreCyclicInstructionOrLiteralRef,
+  CoreInstructionDefs,
+  evaluate,
+  type CoreInstructionHandler,
+} from "../instruction.ts";
+import { CoreTyped } from "../type.ts";
 
-export interface CoreTriggerInstruction extends CoreTyped<CoreTriggerInstructionType> {
-  timings: CoreInstruction[];
-}
+export const CoreCyclicTriggerInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [CoreTriggerInstructionType])],
+  { timings: Type.Array(CoreCyclicInstructionOrLiteralRef) },
+);
+export const CoreTriggerInstruction = Type.Cyclic(
+  CoreInstructionDefs,
+  "CoreCyclicTriggerInstruction",
+);
+export type CoreTriggerInstruction = Type.Static<typeof CoreTriggerInstruction>;
 
 export const trigger: CoreInstructionHandler<CoreTriggerInstruction> = (
   event,

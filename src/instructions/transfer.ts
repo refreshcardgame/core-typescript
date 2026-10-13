@@ -1,11 +1,23 @@
-import type { CoreTransferInstructionType } from "../constants/instruction.ts";
-import { evaluate, type CoreInstruction, type CoreInstructionHandler } from "../instruction.ts";
+import { Type } from "typebox";
+import { CoreTransferInstructionType } from "../constants/instruction.ts";
+import {
+  CoreCyclicInstructionRef,
+  CoreInstructionDefs,
+  evaluate,
+  type CoreInstructionHandler,
+} from "../instruction.ts";
 import { isDestinationData } from "../position.ts";
-import type { CoreTyped } from "../typed.ts";
+import { CoreTyped } from "../type.ts";
 
-export interface CoreTransferInstruction extends CoreTyped<CoreTransferInstructionType> {
-  destinations: CoreInstruction;
-}
+export const CoreCyclicTransferInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [CoreTransferInstructionType])],
+  { destinations: CoreCyclicInstructionRef },
+);
+export const CoreTransferInstruction = Type.Cyclic(
+  CoreInstructionDefs,
+  "CoreCyclicTransferInstruction",
+);
+export type CoreTransferInstruction = Type.Static<typeof CoreTransferInstruction>;
 
 export const transfer: CoreInstructionHandler<CoreTransferInstruction> = (
   event,

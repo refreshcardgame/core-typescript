@@ -1,17 +1,27 @@
-import type { CoreResponseInstructionType } from "../constants/instruction.ts";
+import { Type } from "typebox";
+import { CoreResponseInstructionType } from "../constants/instruction.ts";
 import {
+  CoreCyclicInstructionOrLiteralRef,
+  CoreInstructionDefs,
   evaluate,
   type CoreInstructionHandler,
-  type CoreInstructionOrLiteral,
 } from "../instruction.ts";
 import { CorePlayer } from "../player.ts";
-import type { CoreTyped } from "../typed.ts";
+import { CoreTyped } from "../type.ts";
 
-export interface CoreResponseInstruction extends CoreTyped<CoreResponseInstructionType> {
-  player: CoreInstructionOrLiteral;
-  field: CoreInstructionOrLiteral;
-  index: CoreInstructionOrLiteral;
-}
+export const CoreCyclicResponseInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [CoreResponseInstructionType])],
+  {
+    player: CoreCyclicInstructionOrLiteralRef,
+    field: CoreCyclicInstructionOrLiteralRef,
+    index: CoreCyclicInstructionOrLiteralRef,
+  },
+);
+export const CoreResponseInstruction = Type.Cyclic(
+  CoreInstructionDefs,
+  "CoreCyclicResponseInstruction",
+);
+export type CoreResponseInstruction = Type.Static<typeof CoreResponseInstruction>;
 
 export const response: CoreInstructionHandler<CoreResponseInstruction> = (
   event,

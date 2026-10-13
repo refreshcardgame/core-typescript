@@ -1,5 +1,5 @@
 import { capitalize } from "lodash-es";
-import type { OverrideProperties, SetRequired } from "type-fest";
+import type { OverrideProperties } from "type-fest";
 import { Type } from "typebox";
 import {
   CORE_AFTER_EVENT_PHASE,
@@ -7,61 +7,70 @@ import {
   CORE_EVENT_TYPE,
   CORE_REGISTER_EVENT_PHASE,
   CORE_RESOLVE_EVENT_PHASE,
+  CoreAfterPhase,
+  CoreBeforePhase,
   CoreEventType,
-  type CoreAfterPhase,
-  type CoreBeforePhase,
-  type CoreRegisterPhase,
-  type CoreResolvePhase,
+  CoreRegisterPhase,
+  CoreResolvePhase,
 } from "./constants/event.ts";
 import type { CoreGame } from "./game.ts";
-import type { CoreInstruction } from "./instruction.ts";
-import { evaluate } from "./instruction.ts";
+import { CoreInstruction, evaluate } from "./instruction.ts";
 import { toRotated } from "./iterator.ts";
 import { CoreTypedPayload, isObtainablePayload, toTypedPayload } from "./payload.ts";
 import type { CorePlayer } from "./player.ts";
 import {
+  CoreRequest,
   validateResponse,
   wrapResult,
   type CoreRawResponse,
-  type CoreRequest,
   type CoreResponse,
   type CoreResponseFields,
   type CoreRunner,
   type CoreRunnerResult,
 } from "./runner.ts";
+import { CoreNamed } from "./type.ts";
 
 export const CoreEventPayload = Type.Call(CoreTypedPayload, [CoreEventType]);
 export type CoreEventPayload = Type.Static<typeof CoreEventPayload>;
-type CoreEventPhase = CoreAfterPhase | CoreBeforePhase | CoreRegisterPhase | CoreResolvePhase;
+const CoreEventPhase = Type.Union([
+  CoreAfterPhase,
+  CoreBeforePhase,
+  CoreRegisterPhase,
+  CoreResolvePhase,
+]);
+type CoreEventPhase = Type.Static<typeof CoreEventPhase>;
 export const CoreEventPriorityData = Type.Object({
   passed: Type.Array(Type.String()),
   pointer: Type.Optional(Type.String()),
   step: Type.Number(),
 });
 export type CoreEventPriorityData = Type.Static<typeof CoreEventPriorityData>;
-
-export interface CoreEventData extends CoreEventPayload {
-  aliases: string[];
-  character?: string;
-  finished: boolean;
-  name: string;
-  phase: CoreEventPhase;
-  player?: string;
-  priority: CoreEventPriorityData;
-  register: CoreInstruction[];
-  request?: CoreRequest;
-  resolve: CoreInstruction[];
-  result?: boolean;
-  step: number;
-  timings: string[];
-  variables: Record<string, unknown>;
-}
-
+export const CoreEventData = Type.Interface([CoreEventPayload, CoreNamed], {
+  aliases: Type.Array(Type.String()),
+  character: Type.Optional(Type.String()),
+  finished: Type.Boolean(),
+  phase: CoreEventPhase,
+  player: Type.Optional(Type.String()),
+  priority: CoreEventPriorityData,
+  register: Type.Array(CoreInstruction),
+  request: Type.Optional(CoreRequest),
+  resolve: Type.Array(CoreInstruction),
+  result: Type.Optional(Type.Boolean()),
+  step: Type.Number(),
+  timings: Type.Array(Type.String()),
+  variables: Type.Record(Type.String(), Type.Unknown()),
+});
+export type CoreEventData = Type.Static<typeof CoreEventData>;
 export type CoreEventPriority = OverrideProperties<CoreEventPriorityData, { passed: Set<string> }>;
-export type CoreEventOptions = SetRequired<
-  Partial<OverrideProperties<CoreEventData, { priority: Partial<CoreEventPriorityData> }>>,
-  "name"
->;
+export const CoreEventOptions = Type.Intersect([
+  Type.Partial(
+    Type.Interface([Type.Omit(CoreEventData, ["name", "priority"])], {
+      priority: Type.Partial(CoreEventPriorityData),
+    }),
+  ),
+  CoreNamed,
+]);
+export type CoreEventOptions = Type.Static<typeof CoreEventOptions>;
 
 export class CoreEvent implements CoreRunner {
   aliases: Set<string>;

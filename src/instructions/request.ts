@@ -1,16 +1,24 @@
-import type { CoreRequestInstructionType } from "../constants/instruction.ts";
+import { Type } from "typebox";
+import { CoreRequestInstructionType } from "../constants/instruction.ts";
 import {
+  CoreCyclicInstructionOrLiteralRef,
+  CoreInstructionDefs,
   evaluate,
   type CoreInstructionHandler,
-  type CoreInstructionOrLiteral,
 } from "../instruction.ts";
 import { isObtainablePayload, toTypedPayload } from "../payload.ts";
-import type { CoreRequest, CoreRequestFields } from "../runner.ts";
-import type { CoreTyped } from "../typed.ts";
+import { CoreRequest, type CoreRequestFields } from "../runner.ts";
+import { CoreTyped } from "../type.ts";
 
-export interface CoreRequestInstruction extends CoreTyped<CoreRequestInstructionType> {
-  request: CoreRequest<CoreInstructionOrLiteral>;
-}
+export const CoreCyclicRequestInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [CoreRequestInstructionType])],
+  { request: Type.Call(CoreRequest, [CoreCyclicInstructionOrLiteralRef]) },
+);
+export const CoreRequestInstruction = Type.Cyclic(
+  CoreInstructionDefs,
+  "CoreCyclicRequestInstruction",
+);
+export type CoreRequestInstruction = Type.Static<typeof CoreRequestInstruction>;
 
 export const request: CoreInstructionHandler<CoreRequestInstruction> = (
   event,

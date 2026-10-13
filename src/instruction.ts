@@ -1,144 +1,121 @@
 import { Type } from "typebox";
 import type { CoreEvent } from "./event.ts";
-import { add, CoreRawAddInstruction, type CoreAddInstruction } from "./instructions/add.ts";
-import { and, CoreRawAndInstruction, type CoreAndInstruction } from "./instructions/and.ts";
+import { add, CoreCyclicAddInstruction } from "./instructions/add.ts";
+import { and, CoreCyclicAndInstruction } from "./instructions/and.ts";
 import {
-  CoreRawMultipleDrawInstruction,
-  CoreRawSingleDrawInstruction,
+  CoreCyclicMultipleDrawInstruction,
+  CoreCyclicSingleDrawInstruction,
   draw,
-  type CoreDrawInstruction,
 } from "./instructions/draw.ts";
-import { CoreRawEqualInstruction, equal, type CoreEqualInstruction } from "./instructions/equal.ts";
-import { CoreRawForInstruction, forHandler, type CoreForInstruction } from "./instructions/for.ts";
-import { CoreRawGetInstruction, get, type CoreGetInstruction } from "./instructions/get.ts";
-import { CoreRawGotoInstruction, goto, type CoreGotoInstruction } from "./instructions/goto.ts";
-import {
-  CoreRawGreaterInstruction,
-  greater,
-  type CoreGreaterInstruction,
-} from "./instructions/greater.ts";
-import { CoreRawIfInstruction, ifHandler, type CoreIfInstruction } from "./instructions/if.ts";
-import { CoreRawLessInstruction, less, type CoreLessInstruction } from "./instructions/less.ts";
-import {
-  CoreRawMapInstruction,
-  map as flatMap,
-  map,
-  type CoreMapInstruction,
-} from "./instructions/map.ts";
-import {
-  CoreRawMultiplyInstruction,
-  multiply,
-  type CoreMultiplyInstruction,
-} from "./instructions/multiply.ts";
-import {
-  CoreRawNotEqualInstruction,
-  notEqual,
-  type CoreNotEqualInstruction,
-} from "./instructions/not-equal.ts";
-import { CoreRawNotInstruction, not, type CoreNotInstruction } from "./instructions/not.ts";
-import { CoreRawOrInstruction, or, type CoreOrInstruction } from "./instructions/or.ts";
-import { phase, type CorePhaseInstruction } from "./instructions/phase.ts";
-import { player, type CorePlayerInstruction } from "./instructions/player.ts";
-import { players, type CorePlayersInstruction } from "./instructions/players.ts";
-import { request, type CoreRequestInstruction } from "./instructions/request.ts";
-import { response, type CoreResponseInstruction } from "./instructions/response.ts";
-import { returnHandler, type CoreReturnInstruction } from "./instructions/return.ts";
-import { round, type CoreRoundInstruction } from "./instructions/round.ts";
-import { sequence, type CoreSequenceInstruction } from "./instructions/sequence.ts";
-import { transfer, type CoreTransferInstruction } from "./instructions/transfer.ts";
-import { trigger, type CoreTriggerInstruction } from "./instructions/trigger.ts";
-import { turn, type CoreTurnInstruction } from "./instructions/turn.ts";
-import { variable, type CoreVariableInstruction } from "./instructions/variable.ts";
-import { whileHandler, type CoreWhileInstruction } from "./instructions/while.ts";
+import { CoreCyclicEqualInstruction, equal } from "./instructions/equal.ts";
+import { CoreCyclicForInstruction, forHandler } from "./instructions/for.ts";
+import { CoreCyclicGetInstruction, get } from "./instructions/get.ts";
+import { CoreCyclicGotoInstruction, goto } from "./instructions/goto.ts";
+import { CoreCyclicGreaterInstruction, greater } from "./instructions/greater.ts";
+import { CoreCyclicIfInstruction, ifHandler } from "./instructions/if.ts";
+import { CoreCyclicLessInstruction, less } from "./instructions/less.ts";
+import { CoreCyclicMapInstruction, map as flatMap, map } from "./instructions/map.ts";
+import { CoreCyclicMultiplyInstruction, multiply } from "./instructions/multiply.ts";
+import { CoreCyclicNotEqualInstruction, notEqual } from "./instructions/not-equal.ts";
+import { CoreCyclicNotInstruction, not } from "./instructions/not.ts";
+import { CoreCyclicOrInstruction, or } from "./instructions/or.ts";
+import { CoreCyclicPhaseInstruction, phase } from "./instructions/phase.ts";
+import { CoreCyclicPlayerInstruction, player } from "./instructions/player.ts";
+import { CoreCyclicPlayersInstruction, players } from "./instructions/players.ts";
+import { CoreCyclicRequestInstruction, request } from "./instructions/request.ts";
+import { CoreCyclicResponseInstruction, response } from "./instructions/response.ts";
+import { CoreCyclicReturnInstruction, returnHandler } from "./instructions/return.ts";
+import { CoreCyclicRoundInstruction, round } from "./instructions/round.ts";
+import { CoreCyclicSequenceInstruction, sequence } from "./instructions/sequence.ts";
+import { CoreCyclicTransferInstruction, transfer } from "./instructions/transfer.ts";
+import { CoreCyclicTriggerInstruction, trigger } from "./instructions/trigger.ts";
+import { CoreCyclicTurnInstruction, turn } from "./instructions/turn.ts";
+import { CoreCyclicVariableInstruction, variable } from "./instructions/variable.ts";
+import { CoreCyclicWhileInstruction, whileHandler } from "./instructions/while.ts";
 import type { CoreResponse } from "./runner.ts";
 
-export const CoreRawInstructionRef = Type.Ref("CoreRawInstruction");
-export const CoreRawInstructionOrLiteralRef = Type.Ref("CoreRawInstructionOrLiteral");
+export const CoreCyclicInstructionRef = Type.Ref("CoreCyclicInstruction");
+export const CoreCyclicInstructionOrLiteralRef = Type.Ref("CoreCyclicInstructionOrLiteral");
 export const CoreInstructionDefs = {
-  CoreRawAddInstruction,
-  CoreRawAndInstruction,
-  CoreRawEqualInstruction,
-  CoreRawForInstruction,
-  CoreRawGetInstruction,
-  CoreRawGotoInstruction,
-  CoreRawGreaterInstruction,
-  CoreRawIfInstruction,
-  CoreRawLessInstruction,
-  CoreRawMapInstruction,
-  CoreRawMultipleDrawInstruction,
-  CoreRawMultiplyInstruction,
-  CoreRawNotEqualInstruction,
-  CoreRawNotInstruction,
-  CoreRawOrInstruction,
-  CoreRawSingleDrawInstruction,
-  CoreRawInstruction: Type.Union([
-    Type.Ref("CoreRawAddInstruction"),
-    Type.Ref("CoreRawAndInstruction"),
-    Type.Ref("CoreRawEqualInstruction"),
-    Type.Ref("CoreRawForInstruction"),
-    Type.Ref("CoreRawGetInstruction"),
-    Type.Ref("CoreRawGotoInstruction"),
-    Type.Ref("CoreRawGreaterInstruction"),
-    Type.Ref("CoreRawIfInstruction"),
-    Type.Ref("CoreRawLessInstruction"),
-    Type.Ref("CoreRawMapInstruction"),
-    Type.Ref("CoreRawMultipleDrawInstruction"),
-    Type.Ref("CoreRawMultiplyInstruction"),
-    Type.Ref("CoreRawNotEqualInstruction"),
-    Type.Ref("CoreRawNotInstruction"),
-    Type.Ref("CoreRawOrInstruction"),
-    Type.Ref("CoreRawSingleDrawInstruction"),
+  CoreCyclicAddInstruction,
+  CoreCyclicAndInstruction,
+  CoreCyclicEqualInstruction,
+  CoreCyclicForInstruction,
+  CoreCyclicGetInstruction,
+  CoreCyclicGotoInstruction,
+  CoreCyclicGreaterInstruction,
+  CoreCyclicIfInstruction,
+  CoreCyclicLessInstruction,
+  CoreCyclicMapInstruction,
+  CoreCyclicMultipleDrawInstruction,
+  CoreCyclicMultiplyInstruction,
+  CoreCyclicNotEqualInstruction,
+  CoreCyclicNotInstruction,
+  CoreCyclicOrInstruction,
+  CoreCyclicPhaseInstruction,
+  CoreCyclicPlayerInstruction,
+  CoreCyclicPlayersInstruction,
+  CoreCyclicRequestInstruction,
+  CoreCyclicResponseInstruction,
+  CoreCyclicReturnInstruction,
+  CoreCyclicRoundInstruction,
+  CoreCyclicSequenceInstruction,
+  CoreCyclicSingleDrawInstruction,
+  CoreCyclicTransferInstruction,
+  CoreCyclicTriggerInstruction,
+  CoreCyclicTurnInstruction,
+  CoreCyclicVariableInstruction,
+  CoreCyclicWhileInstruction,
+  CoreCyclicInstruction: Type.Union([
+    Type.Ref("CoreCyclicAddInstruction"),
+    Type.Ref("CoreCyclicAndInstruction"),
+    Type.Ref("CoreCyclicEqualInstruction"),
+    Type.Ref("CoreCyclicForInstruction"),
+    Type.Ref("CoreCyclicGetInstruction"),
+    Type.Ref("CoreCyclicGotoInstruction"),
+    Type.Ref("CoreCyclicGreaterInstruction"),
+    Type.Ref("CoreCyclicIfInstruction"),
+    Type.Ref("CoreCyclicLessInstruction"),
+    Type.Ref("CoreCyclicMapInstruction"),
+    Type.Ref("CoreCyclicMultipleDrawInstruction"),
+    Type.Ref("CoreCyclicMultiplyInstruction"),
+    Type.Ref("CoreCyclicNotEqualInstruction"),
+    Type.Ref("CoreCyclicNotInstruction"),
+    Type.Ref("CoreCyclicOrInstruction"),
+    Type.Ref("CoreCyclicPhaseInstruction"),
+    Type.Ref("CoreCyclicPlayerInstruction"),
+    Type.Ref("CoreCyclicPlayersInstruction"),
+    Type.Ref("CoreCyclicRequestInstruction"),
+    Type.Ref("CoreCyclicResponseInstruction"),
+    Type.Ref("CoreCyclicReturnInstruction"),
+    Type.Ref("CoreCyclicRoundInstruction"),
+    Type.Ref("CoreCyclicSequenceInstruction"),
+    Type.Ref("CoreCyclicSingleDrawInstruction"),
+    Type.Ref("CoreCyclicTransferInstruction"),
+    Type.Ref("CoreCyclicTriggerInstruction"),
+    Type.Ref("CoreCyclicTurnInstruction"),
+    Type.Ref("CoreCyclicVariableInstruction"),
+    Type.Ref("CoreCyclicWhileInstruction"),
   ]),
-  CoreRawInstructionOrLiteral: Type.Union([
+  CoreCyclicInstructionOrLiteral: Type.Union([
     Type.String(),
     Type.Number(),
     Type.Boolean(),
-    CoreRawInstructionRef,
+    CoreCyclicInstructionRef,
   ]),
 } satisfies Type.TProperties;
-export const CoreInstruction = Type.Cyclic(CoreInstructionDefs, "CoreRawInstruction");
+export const CoreInstruction = Type.Cyclic(CoreInstructionDefs, "CoreCyclicInstruction");
+export type CoreInstruction = Type.Static<typeof CoreInstruction>;
 export const CoreInstructionOrLiteral = Type.Cyclic(
   CoreInstructionDefs,
-  "CoreRawInstructionOrLiteral",
+  "CoreCyclicInstructionOrLiteral",
 );
-export type CoreInstruction =
-  | CoreAddInstruction
-  | CoreAndInstruction
-  | CoreEqualInstruction
-  | CoreForInstruction
-  | CoreGetInstruction
-  | CoreGotoInstruction
-  | CoreGreaterInstruction
-  | CoreIfInstruction
-  | CoreLessInstruction
-  | CoreMapInstruction
-  | CoreMultiplyInstruction
-  | CoreNotEqualInstruction
-  | CoreNotInstruction
-  | CoreDrawInstruction
-  | CoreOrInstruction
-  | CoreTransferInstruction
-  | CorePhaseInstruction
-  | CorePlayerInstruction
-  | CorePlayersInstruction
-  | CoreTriggerInstruction
-  | CoreRequestInstruction
-  | CoreResponseInstruction
-  | CoreReturnInstruction
-  | CoreRoundInstruction
-  | CoreSequenceInstruction
-  | CoreTurnInstruction
-  | CoreVariableInstruction
-  | CoreWhileInstruction;
-
-export type CoreInstructionOrLiteral = string | number | boolean | CoreInstruction;
-
+export type CoreInstructionOrLiteral = Type.Static<typeof CoreInstructionOrLiteral>;
 export type CoreInstructionHandler<TInstruction extends CoreInstruction> = (
   event: CoreEvent,
   instruction: TInstruction,
   response?: CoreResponse,
 ) => unknown;
-
 type CoreInstructionHandlers = {
   [K in CoreInstruction["type"]]: CoreInstructionHandler<Extract<CoreInstruction, { type: K }>>;
 };

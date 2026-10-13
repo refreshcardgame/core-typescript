@@ -1,18 +1,18 @@
 import { Type } from "typebox";
 import { CoreOrInstructionType } from "../constants/instruction.ts";
 import {
+  CoreCyclicInstructionOrLiteralRef,
   CoreInstructionDefs,
-  CoreRawInstructionOrLiteralRef,
   evaluate,
   type CoreInstructionHandler,
 } from "../instruction.ts";
-import { CoreTyped } from "../typed.ts";
+import { CoreTyped } from "../type.ts";
 
-export const CoreRawOrInstruction = Type.Interface(
+export const CoreCyclicOrInstruction = Type.Interface(
   [Type.Call(CoreTyped, [CoreOrInstructionType])],
-  { left: CoreRawInstructionOrLiteralRef, right: CoreRawInstructionOrLiteralRef },
+  { left: CoreCyclicInstructionOrLiteralRef, right: CoreCyclicInstructionOrLiteralRef },
 );
-export const CoreOrInstruction = Type.Cyclic(CoreInstructionDefs, "CoreRawOrInstruction");
+export const CoreOrInstruction = Type.Cyclic(CoreInstructionDefs, "CoreCyclicOrInstruction");
 export type CoreOrInstruction = Type.Static<typeof CoreOrInstruction>;
 
 export const or: CoreInstructionHandler<CoreOrInstruction> = (event, { left, right }, response) =>

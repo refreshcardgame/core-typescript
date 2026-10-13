@@ -1,20 +1,20 @@
 import { Type } from "typebox";
 import { CoreMultiplyInstructionType } from "../constants/instruction.ts";
 import {
+  CoreCyclicInstructionOrLiteralRef,
   CoreInstructionDefs,
-  CoreRawInstructionOrLiteralRef,
   evaluate,
   type CoreInstructionHandler,
 } from "../instruction.ts";
-import { CoreTyped } from "../typed.ts";
+import { CoreTyped } from "../type.ts";
 
-export const CoreRawMultiplyInstruction = Type.Interface(
+export const CoreCyclicMultiplyInstruction = Type.Interface(
   [Type.Call(CoreTyped, [CoreMultiplyInstructionType])],
-  { left: CoreRawInstructionOrLiteralRef, right: CoreRawInstructionOrLiteralRef },
+  { left: CoreCyclicInstructionOrLiteralRef, right: CoreCyclicInstructionOrLiteralRef },
 );
 export const CoreMultiplyInstruction = Type.Cyclic(
   CoreInstructionDefs,
-  "CoreRawMultiplyInstruction",
+  "CoreCyclicMultiplyInstruction",
 );
 export type CoreMultiplyInstruction = Type.Static<typeof CoreMultiplyInstruction>;
 

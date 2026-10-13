@@ -99,6 +99,9 @@ export type CoreVariableInstructionType = Type.Static<typeof CoreVariableInstruc
 export const CoreWhileInstructionType = Type.Literal(CORE_WHILE_INSTRUCTION_TYPE);
 export type CoreWhileInstructionType = Type.Static<typeof CoreWhileInstructionType>;
 
-export type CoreEndPhaseName = typeof CORE_END_PHASE_NAME;
-export type CoreMainPhaseName = typeof CORE_MAIN_PHASE_NAME;
-export type CoreStartPhaseName = typeof CORE_START_PHASE_NAME;
+export const CoreEndPhaseName = Type.Literal(CORE_END_PHASE_NAME);
+export type CoreEndPhaseName = Type.Static<typeof CoreEndPhaseName>;
+export const CoreMainPhaseName = Type.Literal(CORE_MAIN_PHASE_NAME);
+export type CoreMainPhaseName = Type.Static<typeof CoreMainPhaseName>;
+export const CoreStartPhaseName = Type.Literal(CORE_START_PHASE_NAME);
+export type CoreStartPhaseName = Type.Static<typeof CoreStartPhaseName>;

@@ -1,3 +1,5 @@
-import type { CoreColors } from "./constants/color.ts";
+import { Type } from "typebox";
+import { CoreColors } from "./constants/color.ts";
 
-export type CoreColor = CoreColors[number];
+export const CoreColor = Type.Index(CoreColors, Type.Number());
+export type CoreColor = Type.Static<typeof CoreColor>;

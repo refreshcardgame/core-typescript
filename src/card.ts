@@ -1,27 +1,31 @@
-import type { SetRequired } from "type-fest";
-import type { CoreColor } from "./color.ts";
-import { CORE_CARD_TYPE, type CoreCardType } from "./constants/card.ts";
+import { Type } from "typebox";
+import { CoreColor } from "./color.ts";
+import { CORE_CARD_TYPE, CoreCardType } from "./constants/card.ts";
 import type { CoreGame } from "./game.ts";
 import type { CoreObject } from "./object.ts";
-import type { CoreTypedPayload } from "./payload.ts";
+import { CoreTypedPayload } from "./payload.ts";
 import type { CorePlayer } from "./player.ts";
+import { CoreNamed } from "./type.ts";
 
-export type CoreCardPayload = CoreTypedPayload<CoreCardType>;
-
-export interface CoreCardInformation {
-  attack?: number;
-  colors: CoreColor[];
-  defense?: number;
-  name: string;
-  owner?: string;
-  types: string[];
-}
-
-export interface CoreCardData extends CoreCardPayload, CoreCardInformation {
-  object?: string;
-}
-
-export type CoreCardOptions = SetRequired<Partial<CoreCardData>, "name">;
+export const CoreCardPayload = Type.Call(CoreTypedPayload, [CoreCardType]);
+export type CoreCardPayload = Type.Static<typeof CoreCardPayload>;
+export const CoreCardInformation = Type.Interface([CoreNamed], {
+  attack: Type.Optional(Type.Number()),
+  colors: Type.Array(CoreColor),
+  defense: Type.Optional(Type.Number()),
+  owner: Type.Optional(Type.String()),
+  types: Type.Array(Type.String()),
+});
+export type CoreCardInformation = Type.Static<typeof CoreCardInformation>;
+export const CoreCardData = Type.Interface([CoreCardPayload, CoreCardInformation], {
+  object: Type.Optional(Type.String()),
+});
+export type CoreCardData = Type.Static<typeof CoreCardData>;
+export const CoreCardOptions = Type.Intersect([
+  Type.Partial(Type.Omit(CoreCardData, ["name"])),
+  CoreNamed,
+]);
+export type CoreCardOptions = Type.Static<typeof CoreCardOptions>;
 
 export class CoreCard {
   attack?: number;

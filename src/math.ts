@@ -1,7 +1,7 @@
-export interface CoreRange {
-  max: number;
-  min: number;
-}
+import { Type } from "typebox";
+
+export const CoreRange = Type.Object({ max: Type.Number(), min: Type.Number() });
+export type CoreRange = Type.Static<typeof CoreRange>;
 
 export class CoreTuple {
   elements: number[];

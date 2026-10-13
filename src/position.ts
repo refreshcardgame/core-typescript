@@ -1,4 +1,4 @@
-import type { OverrideProperties } from "type-fest";
+import { Type } from "typebox";
 import {
   CORE_DECK_ZONE,
   CORE_EXTRA_ZONE,
@@ -6,48 +6,78 @@ import {
   CORE_HAND_ZONE,
   CORE_RECYCLE_ZONE,
   CORE_VOID_ZONE,
-  type CoreCardinals,
-  type CoreFieldZone,
-  type CorePlayerZones,
-  type CoreSides,
-  type CoreVoidZone,
+  CORE_ZONE_GENERIC,
+  CoreCardinals,
+  CoreFieldZone,
+  CorePlayerZones,
+  CoreSides,
+  CoreVoidZone,
 } from "./constants/position.ts";
 import { CoreTuple } from "./math.ts";
 import type { CoreObject } from "./object.ts";
 import { CorePlayer } from "./player.ts";
+import type { CoreCall, CoreExtends } from "./type.ts";
 
-export type CoreCardinal = CoreCardinals[number];
-export type CorePlayerZone = CorePlayerZones[number];
-export type CoreZone<TZone extends string> = Record<"zone", TZone>;
-export type CoreVoidPosition = CoreZone<CoreVoidZone>;
+export const CoreCardinal = Type.Index(CoreCardinals, Type.Number());
+export type CoreCardinal = Type.Static<typeof CoreCardinal>;
+export const CorePlayerZone = Type.Index(CorePlayerZones, Type.Number());
+export type CorePlayerZone = Type.Static<typeof CorePlayerZone>;
+
+const CoreZoneGeneric = Type.Parameter(CORE_ZONE_GENERIC, Type.String());
+type CoreZoneGenericExtends = CoreExtends<typeof CoreZoneGeneric>;
+const CoreZoneRef = Type.Ref(CORE_ZONE_GENERIC);
+export const CoreZoned = Type.Generic([CoreZoneGeneric], Type.Object({ zone: CoreZoneRef }));
+export type CoreZoned<TZone extends CoreZoneGenericExtends> = CoreCall<typeof CoreZoned, [TZone]>;
+
+export type CoreVoidPosition = CoreZoned<CoreVoidZone>;
+export const CoreVoidPositionData = Type.Call(CoreZoned, [CoreVoidZone]);
+export type CoreVoidPositionData = Type.Static<typeof CoreVoidPositionData>;
 
 export interface CoreFieldLocation {
   coordinates: CoreTuple;
   direction: CoreCardinal;
 }
 
-export interface CoreFieldPosition extends CoreZone<CoreFieldZone>, CoreFieldLocation {}
+export type CoreFieldPosition = CoreZoned<CoreFieldZone> & CoreFieldLocation;
 
-export type CoreFieldPositionData = OverrideProperties<CoreFieldPosition, { coordinates: string }>;
+export const CoreFieldPositionData = Type.Interface([Type.Call(CoreZoned, [CoreFieldZone])], {
+  coordinates: Type.String(),
+  direction: CoreCardinal,
+});
+export type CoreFieldPositionData = Type.Static<typeof CoreFieldPositionData>;
 
 export interface CorePlayerLocation {
   player: CorePlayer;
 }
 
-export interface CorePlayerPosition extends CoreZone<CorePlayerZone>, CorePlayerLocation {}
+export type CorePlayerPosition = CoreZoned<CorePlayerZone> & CorePlayerLocation;
 
-export type CorePlayerPositionData = OverrideProperties<CorePlayerPosition, { player: string }>;
+export const CorePlayerPositionData = Type.Interface([Type.Call(CoreZoned, [CorePlayerZone])], {
+  player: Type.String(),
+});
+export type CorePlayerPositionData = Type.Static<typeof CorePlayerPositionData>;
+
 export type CorePosition = CoreFieldPosition | CorePlayerPosition | CoreVoidPosition;
-export type CorePositionData = CoreFieldPositionData | CorePlayerPositionData | CoreVoidPosition;
+export const CorePositionData = Type.Union([
+  CoreFieldPositionData,
+  CorePlayerPositionData,
+  CoreVoidPositionData,
+]);
+export type CorePositionData = Type.Static<typeof CorePositionData>;
 
-export type CoreSide = CoreSides[number];
+export const CoreSide = Type.Index(CoreSides, Type.Number());
+export type CoreSide = Type.Static<typeof CoreSide>;
 
 export interface CoreObjectIndex {
   side: CoreSide;
   target?: CoreObject;
 }
 
-export type CoreObjectIndexData = OverrideProperties<CoreObjectIndex, { target?: string }>;
+export const CoreObjectIndexData = Type.Object({
+  side: CoreSide,
+  target: Type.Optional(Type.String()),
+});
+export type CoreObjectIndexData = Type.Static<typeof CoreObjectIndexData>;
 
 export interface CoreDestination {
   objects: CoreObject[];
@@ -55,11 +85,12 @@ export interface CoreDestination {
   index?: CoreObjectIndex;
 }
 
-export interface CoreDestinationData {
-  objects: string[];
-  position: CorePositionData;
-  index?: CoreObjectIndexData;
-}
+export const CoreDestinationData = Type.Object({
+  objects: Type.Array(Type.String()),
+  position: CorePositionData,
+  index: Type.Optional(CoreObjectIndexData),
+});
+export type CoreDestinationData = Type.Static<typeof CoreDestinationData>;
 
 export function isDestinationData(data: unknown): data is CoreDestinationData {
   if (typeof data !== "object" || data === null) return false;

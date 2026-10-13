@@ -1,18 +1,18 @@
 import { Type } from "typebox";
 import { CoreLessInstructionType } from "../constants/instruction.ts";
 import {
+  CoreCyclicInstructionOrLiteralRef,
   CoreInstructionDefs,
-  CoreRawInstructionOrLiteralRef,
   evaluate,
   type CoreInstructionHandler,
 } from "../instruction.ts";
-import { CoreTyped } from "../typed.ts";
+import { CoreTyped } from "../type.ts";
 
-export const CoreRawLessInstruction = Type.Interface(
+export const CoreCyclicLessInstruction = Type.Interface(
   [Type.Call(CoreTyped, [CoreLessInstructionType])],
-  { left: CoreRawInstructionOrLiteralRef, right: CoreRawInstructionOrLiteralRef },
+  { left: CoreCyclicInstructionOrLiteralRef, right: CoreCyclicInstructionOrLiteralRef },
 );
-export const CoreLessInstruction = Type.Cyclic(CoreInstructionDefs, "CoreRawLessInstruction");
+export const CoreLessInstruction = Type.Cyclic(CoreInstructionDefs, "CoreCyclicLessInstruction");
 export type CoreLessInstruction = Type.Static<typeof CoreLessInstruction>;
 
 export const less: CoreInstructionHandler<CoreLessInstruction> = (

@@ -5,13 +5,24 @@ import { CORE_EVENT_TYPE } from "./constants/event.ts";
 import { CORE_OBJECT_TYPE } from "./constants/object.ts";
 import { CORE_PLAYER_TYPE } from "./constants/player.ts";
 import type { CoreState } from "./state.ts";
-import { CoreRawTyped, CoreTypeGeneric, type CoreTyped } from "./typed.ts";
+import {
+  CoreTyped,
+  CoreTypeGeneric,
+  CoreTypeRef,
+  type CoreCall,
+  type CoreTypeGenericExtends,
+} from "./type.ts";
 
 export const CorePayload = Type.Object({ id: Type.String() });
 export type CorePayload = Type.Static<typeof CorePayload>;
-export const CoreTypedPayload = CoreTypeGeneric(Type.Intersect([CorePayload, CoreRawTyped]));
-export type CoreTypedPayload<TType extends string> = CorePayload & CoreTyped<TType>;
-
+export const CoreTypedPayload = Type.Generic(
+  [CoreTypeGeneric],
+  Type.Intersect([CorePayload, Type.Call(CoreTyped, [CoreTypeRef])]),
+);
+export type CoreTypedPayload<TType extends CoreTypeGenericExtends> = CoreCall<
+  typeof CoreTypedPayload,
+  [TType]
+>;
 export type CoreObtainable = {
   [K in keyof CoreState]: K extends `${string}s`
     ? CoreState[K] extends Map<string, infer V>
@@ -21,10 +32,6 @@ export type CoreObtainable = {
 }[keyof CoreState];
 export type CoreObtainableType = CoreObtainable["type"];
 export type CoreObtainablePayload = CoreTypedPayload<CoreObtainableType>;
-
-export function isPayload(payload: unknown): payload is CorePayload {
-  return Value.Check(CorePayload, payload);
-}
 
 export function isObtainablePayload(payload: unknown): payload is CoreObtainablePayload {
   if (isTypedPayload(payload))

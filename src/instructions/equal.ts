@@ -1,18 +1,18 @@
 import { Type } from "typebox";
 import { CoreEqualInstructionType } from "../constants/instruction.ts";
 import {
+  CoreCyclicInstructionOrLiteralRef,
   CoreInstructionDefs,
-  CoreRawInstructionOrLiteralRef,
   evaluate,
   type CoreInstructionHandler,
 } from "../instruction.ts";
-import { CoreTyped } from "../typed.ts";
+import { CoreTyped } from "../type.ts";
 
-export const CoreRawEqualInstruction = Type.Interface(
+export const CoreCyclicEqualInstruction = Type.Interface(
   [Type.Call(CoreTyped, [CoreEqualInstructionType])],
-  { left: CoreRawInstructionOrLiteralRef, right: CoreRawInstructionOrLiteralRef },
+  { left: CoreCyclicInstructionOrLiteralRef, right: CoreCyclicInstructionOrLiteralRef },
 );
-export const CoreEqualInstruction = Type.Cyclic(CoreInstructionDefs, "CoreRawEqualInstruction");
+export const CoreEqualInstruction = Type.Cyclic(CoreInstructionDefs, "CoreCyclicEqualInstruction");
 export type CoreEqualInstruction = Type.Static<typeof CoreEqualInstruction>;
 
 export const equal: CoreInstructionHandler<CoreEqualInstruction> = (

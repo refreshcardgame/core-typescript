@@ -1,14 +1,22 @@
-import type { CoreReturnInstructionType } from "../constants/instruction.ts";
+import { Type } from "typebox";
+import { CoreReturnInstructionType } from "../constants/instruction.ts";
 import {
+  CoreCyclicInstructionOrLiteralRef,
+  CoreInstructionDefs,
   evaluate,
   type CoreInstructionHandler,
-  type CoreInstructionOrLiteral,
 } from "../instruction.ts";
-import type { CoreTyped } from "../typed.ts";
+import { CoreTyped } from "../type.ts";
 
-export interface CoreReturnInstruction extends CoreTyped<CoreReturnInstructionType> {
-  value?: CoreInstructionOrLiteral;
-}
+export const CoreCyclicReturnInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [CoreReturnInstructionType])],
+  { value: Type.Optional(CoreCyclicInstructionOrLiteralRef) },
+);
+export const CoreReturnInstruction = Type.Cyclic(
+  CoreInstructionDefs,
+  "CoreCyclicReturnInstruction",
+);
+export type CoreReturnInstruction = Type.Static<typeof CoreReturnInstruction>;
 
 export const returnHandler: CoreInstructionHandler<CoreReturnInstruction> = (
   event,

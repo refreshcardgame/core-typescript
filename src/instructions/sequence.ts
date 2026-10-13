@@ -1,14 +1,22 @@
-import type { CoreSequenceInstructionType } from "../constants/instruction.ts";
+import { Type } from "typebox";
+import { CoreSequenceInstructionType } from "../constants/instruction.ts";
 import {
+  CoreCyclicInstructionOrLiteralRef,
+  CoreInstructionDefs,
   evaluate,
   type CoreInstructionHandler,
-  type CoreInstructionOrLiteral,
 } from "../instruction.ts";
-import type { CoreTyped } from "../typed.ts";
+import { CoreTyped } from "../type.ts";
 
-export interface CoreSequenceInstruction extends CoreTyped<CoreSequenceInstructionType> {
-  instructions: CoreInstructionOrLiteral[];
-}
+export const CoreCyclicSequenceInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [CoreSequenceInstructionType])],
+  { instructions: Type.Array(CoreCyclicInstructionOrLiteralRef) },
+);
+export const CoreSequenceInstruction = Type.Cyclic(
+  CoreInstructionDefs,
+  "CoreCyclicSequenceInstruction",
+);
+export type CoreSequenceInstruction = Type.Static<typeof CoreSequenceInstruction>;
 
 export const sequence: CoreInstructionHandler<CoreSequenceInstruction> = (
   event,

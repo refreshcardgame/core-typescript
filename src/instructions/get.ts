@@ -2,20 +2,20 @@ import { Type } from "typebox";
 import { CoreGetInstructionType } from "../constants/instruction.ts";
 import type { CoreEvent } from "../event.ts";
 import {
+  CoreCyclicInstructionOrLiteralRef,
   CoreInstructionDefs,
-  CoreRawInstructionOrLiteralRef,
   evaluate,
   type CoreInstructionHandler,
 } from "../instruction.ts";
 import { isObtainablePayload } from "../payload.ts";
 import { isPositionData } from "../position.ts";
-import { CoreTyped } from "../typed.ts";
+import { CoreTyped } from "../type.ts";
 
-export const CoreRawGetInstruction = Type.Interface(
+export const CoreCyclicGetInstruction = Type.Interface(
   [Type.Call(CoreTyped, [CoreGetInstructionType])],
-  { property: CoreRawInstructionOrLiteralRef, from: CoreRawInstructionOrLiteralRef },
+  { property: CoreCyclicInstructionOrLiteralRef, from: CoreCyclicInstructionOrLiteralRef },
 );
-export const CoreGetInstruction = Type.Cyclic(CoreInstructionDefs, "CoreRawGetInstruction");
+export const CoreGetInstruction = Type.Cyclic(CoreInstructionDefs, "CoreCyclicGetInstruction");
 export type CoreGetInstruction = Type.Static<typeof CoreGetInstruction>;
 
 function parse(event: CoreEvent, value: unknown): unknown {

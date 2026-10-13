@@ -1,18 +1,18 @@
 import { Type } from "typebox";
 import { CoreGotoInstructionType } from "../constants/instruction.ts";
 import {
+  CoreCyclicInstructionOrLiteralRef,
   CoreInstructionDefs,
-  CoreRawInstructionOrLiteralRef,
   evaluate,
   type CoreInstructionHandler,
 } from "../instruction.ts";
-import { CoreTyped } from "../typed.ts";
+import { CoreTyped } from "../type.ts";
 
-export const CoreRawGotoInstruction = Type.Interface(
+export const CoreCyclicGotoInstruction = Type.Interface(
   [Type.Call(CoreTyped, [CoreGotoInstructionType])],
-  { target: CoreRawInstructionOrLiteralRef },
+  { target: CoreCyclicInstructionOrLiteralRef },
 );
-export const CoreGotoInstruction = Type.Cyclic(CoreInstructionDefs, "CoreRawGotoInstruction");
+export const CoreGotoInstruction = Type.Cyclic(CoreInstructionDefs, "CoreCyclicGotoInstruction");
 export type CoreGotoInstruction = Type.Static<typeof CoreGotoInstruction>;
 
 export const goto: CoreInstructionHandler<CoreGotoInstruction> = (event, { target }, response) => {

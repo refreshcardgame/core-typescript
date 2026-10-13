@@ -1,3 +1,6 @@
+import { Type } from "typebox";
+
 export const CORE_OBJECT_TYPE = "object" as const;
 
-export type CoreObjectType = typeof CORE_OBJECT_TYPE;
+export const CoreObjectType = Type.Literal(CORE_OBJECT_TYPE);
+export type CoreObjectType = Type.Static<typeof CoreObjectType>;

@@ -1,11 +1,20 @@
-import type { CoreTurnInstructionType } from "../constants/instruction.ts";
-import { evaluate, type CoreInstruction, type CoreInstructionHandler } from "../instruction.ts";
+import { Type } from "typebox";
+import { CoreTurnInstructionType } from "../constants/instruction.ts";
+import {
+  CoreCyclicInstructionRef,
+  CoreInstructionDefs,
+  evaluate,
+  type CoreInstructionHandler,
+} from "../instruction.ts";
 import { CorePlayer } from "../player.ts";
-import type { CoreTyped } from "../typed.ts";
+import { CoreTyped } from "../type.ts";
 
-export interface CoreTurnInstruction extends CoreTyped<CoreTurnInstructionType> {
-  player: CoreInstruction;
-}
+export const CoreCyclicTurnInstruction = Type.Interface(
+  [Type.Call(CoreTyped, [CoreTurnInstructionType])],
+  { player: CoreCyclicInstructionRef },
+);
+export const CoreTurnInstruction = Type.Cyclic(CoreInstructionDefs, "CoreCyclicTurnInstruction");
+export type CoreTurnInstruction = Type.Static<typeof CoreTurnInstruction>;
 
 export const turn: CoreInstructionHandler<CoreTurnInstruction> = (event, { player }, response) => {
   const evaluated = evaluate(event, player, response);
