@@ -4,21 +4,15 @@ import {
   CoreFlatMapInstructionType,
   CoreMapInstructionType,
 } from "../constants/instruction.ts";
-import {
-  CoreCyclicInstructionOrLiteralRef,
-  CoreCyclicInstructionRef,
-  CoreInstructionDefs,
-  evaluate,
-  type CoreInstructionHandler,
-} from "../instruction.ts";
+import { CoreInstructionDefs, evaluate, type CoreInstructionHandler } from "../instruction.ts";
 import { CoreTyped } from "../type.ts";
 
 export const CoreCyclicMapInstruction = Type.Interface(
   [Type.Call(CoreTyped, [Type.Union([CoreFlatMapInstructionType, CoreMapInstructionType])])],
   {
-    each: CoreCyclicInstructionOrLiteralRef,
-    of: CoreCyclicInstructionRef,
-    to: CoreCyclicInstructionOrLiteralRef,
+    each: Type.Ref("CoreCyclicInstructionOrLiteral"),
+    of: Type.Ref("CoreCyclicInstruction"),
+    to: Type.Ref("CoreCyclicInstructionOrLiteral"),
   },
 );
 export const CoreMapInstruction = Type.Cyclic(CoreInstructionDefs, "CoreCyclicMapInstruction");

@@ -34,8 +34,6 @@ import { CoreCyclicVariableInstruction, variable } from "./instructions/variable
 import { CoreCyclicWhileInstruction, whileHandler } from "./instructions/while.ts";
 import type { CoreResponse } from "./runner.ts";
 
-export const CoreCyclicInstructionRef = Type.Ref("CoreCyclicInstruction");
-export const CoreCyclicInstructionOrLiteralRef = Type.Ref("CoreCyclicInstructionOrLiteral");
 export const CoreInstructionDefs = {
   CoreCyclicAddInstruction,
   CoreCyclicAndInstruction,
@@ -101,7 +99,7 @@ export const CoreInstructionDefs = {
     Type.String(),
     Type.Number(),
     Type.Boolean(),
-    CoreCyclicInstructionRef,
+    Type.Ref("CoreCyclicInstruction"),
   ]),
 } satisfies Type.TProperties;
 export const CoreInstruction = Type.Cyclic(CoreInstructionDefs, "CoreCyclicInstruction");

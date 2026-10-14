@@ -5,12 +5,7 @@ import {
   CorePhaseInstructionType,
   CoreStartPhaseName,
 } from "../constants/instruction.ts";
-import {
-  CoreCyclicInstructionRef,
-  CoreInstructionDefs,
-  evaluate,
-  type CoreInstructionHandler,
-} from "../instruction.ts";
+import { CoreInstructionDefs, evaluate, type CoreInstructionHandler } from "../instruction.ts";
 import { CorePlayer } from "../player.ts";
 import { CoreTyped } from "../type.ts";
 
@@ -18,7 +13,7 @@ export const CoreCyclicPhaseInstruction = Type.Interface(
   [Type.Call(CoreTyped, [CorePhaseInstructionType])],
   {
     name: Type.Union([CoreEndPhaseName, CoreMainPhaseName, CoreStartPhaseName]),
-    player: CoreCyclicInstructionRef,
+    player: Type.Ref("CoreCyclicInstruction"),
   },
 );
 export const CorePhaseInstruction = Type.Cyclic(CoreInstructionDefs, "CoreCyclicPhaseInstruction");

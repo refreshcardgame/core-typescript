@@ -1,17 +1,12 @@
 import { Type } from "typebox";
 import { CoreTurnInstructionType } from "../constants/instruction.ts";
-import {
-  CoreCyclicInstructionRef,
-  CoreInstructionDefs,
-  evaluate,
-  type CoreInstructionHandler,
-} from "../instruction.ts";
+import { CoreInstructionDefs, evaluate, type CoreInstructionHandler } from "../instruction.ts";
 import { CorePlayer } from "../player.ts";
 import { CoreTyped } from "../type.ts";
 
 export const CoreCyclicTurnInstruction = Type.Interface(
   [Type.Call(CoreTyped, [CoreTurnInstructionType])],
-  { player: CoreCyclicInstructionRef },
+  { player: Type.Ref("CoreCyclicInstruction") },
 );
 export const CoreTurnInstruction = Type.Cyclic(CoreInstructionDefs, "CoreCyclicTurnInstruction");
 export type CoreTurnInstruction = Type.Static<typeof CoreTurnInstruction>;

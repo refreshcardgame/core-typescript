@@ -1,17 +1,12 @@
 import { Type } from "typebox";
 import { CoreTransferInstructionType } from "../constants/instruction.ts";
-import {
-  CoreCyclicInstructionRef,
-  CoreInstructionDefs,
-  evaluate,
-  type CoreInstructionHandler,
-} from "../instruction.ts";
+import { CoreInstructionDefs, evaluate, type CoreInstructionHandler } from "../instruction.ts";
 import { isDestinationData } from "../position.ts";
 import { CoreTyped } from "../type.ts";
 
 export const CoreCyclicTransferInstruction = Type.Interface(
   [Type.Call(CoreTyped, [CoreTransferInstructionType])],
-  { destinations: CoreCyclicInstructionRef },
+  { destinations: Type.Ref("CoreCyclicInstruction") },
 );
 export const CoreTransferInstruction = Type.Cyclic(
   CoreInstructionDefs,

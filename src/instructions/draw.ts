@@ -1,13 +1,7 @@
 import { Type } from "typebox";
 import { CoreDrawInstructionType } from "../constants/instruction.ts";
 import { CORE_HAND_ZONE } from "../constants/position.ts";
-import {
-  CoreCyclicInstructionOrLiteralRef,
-  CoreCyclicInstructionRef,
-  CoreInstructionDefs,
-  evaluate,
-  type CoreInstructionHandler,
-} from "../instruction.ts";
+import { CoreInstructionDefs, evaluate, type CoreInstructionHandler } from "../instruction.ts";
 import { takeRight } from "../iterator.ts";
 import { CorePlayer } from "../player.ts";
 import type { CoreDestination } from "../position.ts";
@@ -15,7 +9,7 @@ import { CoreTyped } from "../type.ts";
 
 export const CoreCyclicSingleDrawInstruction = Type.Interface(
   [Type.Call(CoreTyped, [CoreDrawInstructionType])],
-  { player: CoreCyclicInstructionRef, count: CoreCyclicInstructionOrLiteralRef },
+  { player: Type.Ref("CoreCyclicInstruction"), count: Type.Ref("CoreCyclicInstructionOrLiteral") },
 );
 export const CoreSingleDrawInstruction = Type.Cyclic(
   CoreInstructionDefs,
@@ -24,9 +18,9 @@ export const CoreSingleDrawInstruction = Type.Cyclic(
 export const CoreCyclicMultipleDrawInstruction = Type.Interface(
   [Type.Call(CoreTyped, [CoreDrawInstructionType])],
   {
-    players: CoreCyclicInstructionRef,
-    each: Type.Optional(CoreCyclicInstructionOrLiteralRef),
-    count: CoreCyclicInstructionOrLiteralRef,
+    players: Type.Ref("CoreCyclicInstruction"),
+    each: Type.Optional(Type.Ref("CoreCyclicInstructionOrLiteral")),
+    count: Type.Ref("CoreCyclicInstructionOrLiteral"),
   },
 );
 export const CoreMultipleDrawInstruction = Type.Cyclic(
