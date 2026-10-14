@@ -12,7 +12,8 @@ export type CoreExtends<Parameter extends Type.TParameter> = Type.Static<Paramet
 export const CoreTypeGeneric = Type.Parameter(CORE_TYPE_GENERIC, Type.String());
 export type CoreTypeGenericExtends = CoreExtends<typeof CoreTypeGeneric>;
 export const CoreTypeRef = Type.Ref(CORE_TYPE_GENERIC);
-export const CoreTyped = Type.Generic([CoreTypeGeneric], Type.Object({ type: CoreTypeRef }));
+export const CoreGenericTyped = Type.Object({ type: CoreTypeRef });
+export const CoreTyped = Type.Generic([CoreTypeGeneric], CoreGenericTyped);
 export type CoreTyped<TType extends CoreTypeGenericExtends> = CoreCall<typeof CoreTyped, [TType]>;
 
 export const CoreNamed = Type.Object({ name: Type.String() });

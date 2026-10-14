@@ -10,46 +10,36 @@ export const CoreOptionGeneric = Type.Parameter(
 );
 export type CoreOptionGenericEquals = CoreEquals<typeof CoreOptionGeneric>;
 export const CoreOptionRef = Type.Ref(CORE_OPTION_GENERIC);
-export const CoreRequestField = Type.Generic(
-  [CoreOptionGeneric],
-  Type.Interface([CoreRange], {
-    default: Type.Optional(Type.Array(Type.Number())),
-    options: Type.Array(CoreOptionRef),
-  }),
-);
+export const CoreGenericRequestField = Type.Interface([CoreRange], {
+  default: Type.Optional(Type.Array(Type.Number())),
+  options: Type.Array(CoreOptionRef),
+});
+export const CoreRequestField = Type.Generic([CoreOptionGeneric], CoreGenericRequestField);
 export type CoreRequestField<TOption = CoreOptionGenericEquals> = CoreCall<
   typeof CoreRequestField,
   [TOption]
 >;
-export const CoreRequestFields = Type.Generic(
-  [CoreOptionGeneric],
-  Type.Record(Type.String(), Type.Call(CoreRequestField, [CoreOptionRef])),
-);
+export const CoreGenericRequestFields = Type.Record(Type.String(), CoreGenericRequestField);
+export const CoreRequestFields = Type.Generic([CoreOptionGeneric], CoreGenericRequestFields);
 export type CoreRequestFields<TOption = CoreOptionGenericEquals> = CoreCall<
   typeof CoreRequestFields,
   [TOption]
 >;
-export const CoreRequest = Type.Generic(
-  [CoreOptionGeneric],
-  Type.Record(Type.String(), Type.Call(CoreRequestFields, [CoreOptionRef])),
-);
+export const CoreGenericRequest = Type.Record(Type.String(), CoreGenericRequestFields);
+export const CoreRequest = Type.Generic([CoreOptionGeneric], CoreGenericRequest);
 export type CoreRequest<TOption = CoreOptionGenericEquals> = CoreCall<
   typeof CoreRequest,
   [TOption]
 >;
 
-export const CoreResponseFields = Type.Generic(
-  [CoreOptionGeneric],
-  Type.Record(Type.String(), Type.Array(CoreOptionRef)),
-);
+export const CoreGenericResponseFields = Type.Record(Type.String(), Type.Array(CoreOptionRef));
+export const CoreResponseFields = Type.Generic([CoreOptionGeneric], CoreGenericResponseFields);
 export type CoreResponseFields<TOption = CoreOptionGenericEquals> = CoreCall<
   typeof CoreResponseFields,
   [TOption]
 >;
-export const CoreResponse = Type.Generic(
-  [CoreOptionGeneric],
-  Type.Record(Type.String(), Type.Call(CoreResponseFields, [CoreOptionRef])),
-);
+export const CoreGenericResponse = Type.Record(Type.String(), CoreGenericResponseFields);
+export const CoreResponse = Type.Generic([CoreOptionGeneric], CoreGenericResponse);
 export type CoreResponse<TOption = CoreOptionGenericEquals> = CoreCall<
   typeof CoreResponse,
   [TOption]

@@ -6,9 +6,8 @@ import { CORE_OBJECT_TYPE } from "./constants/object.ts";
 import { CORE_PLAYER_TYPE } from "./constants/player.ts";
 import type { CoreState } from "./state.ts";
 import {
-  CoreTyped,
+  CoreGenericTyped,
   CoreTypeGeneric,
-  CoreTypeRef,
   type CoreCall,
   type CoreTypeGenericExtends,
 } from "./type.ts";
@@ -17,7 +16,7 @@ export const CorePayload = Type.Object({ id: Type.String() });
 export type CorePayload = Type.Static<typeof CorePayload>;
 export const CoreTypedPayload = Type.Generic(
   [CoreTypeGeneric],
-  Type.Intersect([CorePayload, Type.Call(CoreTyped, [CoreTypeRef])]),
+  Type.Intersect([CorePayload, CoreGenericTyped]),
 );
 export type CoreTypedPayload<TType extends CoreTypeGenericExtends> = CoreCall<
   typeof CoreTypedPayload,
