@@ -1,4 +1,5 @@
 import { Type } from "typebox";
+import { Value } from "typebox/value";
 import {
   CORE_DECK_ZONE,
   CORE_EXTRA_ZONE,
@@ -13,6 +14,7 @@ import {
   CoreSides,
   CoreVoidZone,
 } from "./constants/position.ts";
+import type { CoreGame } from "./game.ts";
 import { CoreTuple } from "./math.ts";
 import type { CoreObject } from "./object.ts";
 import { CorePlayer } from "./player.ts";
@@ -93,16 +95,7 @@ export const CoreDestinationData = Type.Object({
 export type CoreDestinationData = Type.Static<typeof CoreDestinationData>;
 
 export function isDestinationData(data: unknown): data is CoreDestinationData {
-  if (typeof data !== "object" || data === null) return false;
-  if (
-    !("objects" in data) ||
-    !Array.isArray(data.objects) ||
-    data.objects.some((object) => typeof object !== "string")
-  )
-    return false;
-  if (!("position" in data) || !isPositionData(data.position)) return false;
-  if ("index" in data && !isObjectIndex(data.index)) return false;
-  return true;
+  return Value.Check(CoreDestinationData, data);
 }
 
 export function isObjectIndex(data: unknown): data is CoreObjectIndex {
@@ -136,27 +129,7 @@ export function isPosition(position: unknown): position is CorePosition {
 }
 
 export function isPositionData(data: unknown): data is CorePositionData {
-  if (typeof data === "object" && data !== null && "zone" in data)
-    switch (data.zone) {
-      case CORE_FIELD_ZONE:
-        return (
-          "coordinates" in data &&
-          typeof data.coordinates === "string" &&
-          "direction" in data &&
-          typeof data.direction === "string"
-        );
-
-      case CORE_VOID_ZONE:
-        return true;
-
-      case CORE_DECK_ZONE:
-      case CORE_EXTRA_ZONE:
-      case CORE_HAND_ZONE:
-      case CORE_RECYCLE_ZONE:
-        return "player" in data && typeof data.player === "string";
-    }
-
-  return false;
+  return Value.Check(CorePositionData, data);
 }
 
 export function isSamePosition(
@@ -182,6 +155,19 @@ export function isSamePosition(
   );
 }
 
+export function toDestination(
+  game: CoreGame,
+  { objects, position, index }: CoreDestinationData,
+): CoreDestination | undefined {
+  const pos = toPosition(game, position);
+  if (!pos) return;
+  const destination: CoreDestination = { objects: game.state.getObjects(objects), position: pos };
+  if (!index) return destination;
+  const idx = toObjectIndex(game, index);
+  if (idx) destination.index = idx;
+  return destination;
+}
+
 export function toDestinationData({
   objects,
   position,
@@ -195,10 +181,35 @@ export function toDestinationData({
   return data;
 }
 
+export function toObjectIndex(
+  game: CoreGame,
+  { side, target }: CoreObjectIndexData,
+): CoreObjectIndex | undefined {
+  const object = game.state.getObject(target);
+  if (object) return { side, target: object };
+}
+
 export function toObjectIndexData({ side, target }: CoreObjectIndex): CoreObjectIndexData {
   const data: CoreObjectIndexData = { side };
   if (target) data.target = target.id;
   return data;
+}
+
+export function toPosition(game: CoreGame, data: CorePositionData): CorePosition | undefined {
+  switch (data.zone) {
+    case CORE_FIELD_ZONE:
+      return {
+        zone: data.zone,
+        coordinates: CoreTuple.from(data.coordinates),
+        direction: data.direction,
+      };
+
+    case CORE_VOID_ZONE:
+      return { zone: data.zone };
+  }
+
+  const player = game.state.getPlayer(data.player);
+  if (player) return { zone: data.zone, player };
 }
 
 export function toPositionData(position: CorePosition): CorePositionData {

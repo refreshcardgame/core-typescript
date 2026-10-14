@@ -1,5 +1,4 @@
 import { DoublyLinkedList } from "data-structure-typed";
-import type { SetRequired } from "type-fest";
 import { Type } from "typebox";
 import {
   CORE_INITIAL_PLAYER_INTEGRITY,
@@ -42,7 +41,11 @@ export const CorePlayerData = Type.Interface([CorePlayerPayload], {
   starting: CorePlayerStarting,
 });
 export type CorePlayerData = Type.Static<typeof CorePlayerData>;
-export type CorePlayerOptions = SetRequired<Partial<CorePlayerData>, "id" | "starting">;
+export const CorePlayerOptions = Type.Intersect([
+  Type.Partial(Type.Omit(CorePlayerData, ["id", "starting"])),
+  Type.Pick(CorePlayerData, ["id", "starting"]),
+]);
+export type CorePlayerOptions = Type.Static<typeof CorePlayerOptions>;
 
 export class CorePlayer {
   characters: string[];

@@ -41,7 +41,7 @@ import type { CoreEvent } from "./event.ts";
 import { takeRight } from "./iterator.ts";
 import { isObtainablePayload, toTypedPayload } from "./payload.ts";
 import { CorePlayer } from "./player.ts";
-import { isDestinationData, type CoreDestination } from "./position.ts";
+import { isDestinationData, toDestination, type CoreDestination } from "./position.ts";
 import {
   CoreGenericRequest,
   CoreRequest,
@@ -519,7 +519,7 @@ const transfer: CoreInstructionHandler<CoreTransferInstruction> = (
 
   for (const { objects, position, index } of evaluated
     .filter(isDestinationData)
-    .map((data) => event.game.state.toDestination(data))
+    .map((data) => toDestination(event.game, data))
     .filter((destination) => !!destination)) {
     count += event.game.state.transfer(objects, position, index);
   }

@@ -1,12 +1,14 @@
 import type { DoublyLinkedList, SinglyLinkedList } from "data-structure-typed";
 import { Random, Xoshiro128StarStarRNG } from "random";
+import { Type } from "typebox";
 
-export interface CoreRandomData {
-  next: number;
-  seed: number;
-}
-
-export type CoreRandomOptions = Partial<CoreRandomData>;
+export const CoreRandomData = Type.Object({
+  next: Type.Number(),
+  seed: Type.Number(),
+});
+export type CoreRandomData = Type.Static<typeof CoreRandomData>;
+export const CoreRandomOptions = Type.Partial(CoreRandomData);
+export type CoreRandomOptions = Type.Static<typeof CoreRandomOptions>;
 
 function generateSeed(): number {
   return (crypto.getRandomValues(new Uint32Array(1)) as Uint32Array & { 0: number })[0];

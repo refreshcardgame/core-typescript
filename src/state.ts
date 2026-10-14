@@ -1,7 +1,7 @@
 import { DoublyLinkedList, Stack } from "data-structure-typed";
 import { capitalize } from "lodash-es";
-import type { OverrideProperties, SetRequired } from "type-fest";
-import { CoreCard, type CoreCardData, type CoreCardOptions } from "./card.ts";
+import { Type } from "typebox";
+import { CoreCard, CoreCardData, CoreCardOptions } from "./card.ts";
 import { CORE_TURN_EVENT_NAME } from "./constants/event.ts";
 import {
   CORE_AFTER_SIDE,
@@ -9,54 +9,49 @@ import {
   CORE_FIELD_ZONE,
   CORE_VOID_ZONE,
 } from "./constants/position.ts";
-import { CoreEvent, type CoreEventData, type CoreEventOptions } from "./event.ts";
+import { CoreEvent, CoreEventData, CoreEventOptions } from "./event.ts";
 import type { CoreGame } from "./game.ts";
 import { CoreTuple } from "./math.ts";
-import { CoreObject, type CoreObjectData, type CoreObjectOptions } from "./object.ts";
+import { CoreObject, CoreObjectData, CoreObjectOptions } from "./object.ts";
 import { type CoreObtainable, type CoreTypedPayload } from "./payload.ts";
-import { CorePlayer, type CorePlayerData, type CorePlayerOptions } from "./player.ts";
+import { CorePlayer, CorePlayerData, CorePlayerOptions } from "./player.ts";
 import {
   isSamePosition,
   toPositionData,
-  type CoreDestination,
-  type CoreDestinationData,
   type CoreFieldLocation,
   type CoreObjectIndex,
-  type CoreObjectIndexData,
   type CorePosition,
-  type CorePositionData,
 } from "./position.ts";
-import { CoreRandom, type CoreRandomData, type CoreRandomOptions } from "./random.ts";
+import { CoreRandom, CoreRandomData, CoreRandomOptions } from "./random.ts";
 
-export interface CoreStateData {
-  cards: Record<string, CoreCardData>;
-  dimensions: number;
-  events: Record<string, CoreEventData>;
-  field: Record<string, string[]>;
-  objects: Record<string, CoreObjectData>;
-  order: string[];
-  players: Record<string, CorePlayerData>;
-  random: CoreRandomData;
-  stack: string[];
-  started: boolean;
-  void: string[];
-}
-
-export type CoreStateOptions = SetRequired<
-  Partial<
-    OverrideProperties<
-      CoreStateData,
-      {
-        cards: Record<string, CoreCardOptions>;
-        events: Record<string, CoreEventOptions>;
-        objects: Record<string, CoreObjectOptions>;
-        players: Record<string, CorePlayerOptions>;
-        random: CoreRandomOptions;
-      }
-    >
-  >,
-  "dimensions"
->;
+export const CoreStateData = Type.Object({
+  cards: Type.Record(Type.String(), CoreCardData),
+  dimensions: Type.Number(),
+  events: Type.Record(Type.String(), CoreEventData),
+  field: Type.Record(Type.String(), Type.Array(Type.String())),
+  objects: Type.Record(Type.String(), CoreObjectData),
+  order: Type.Array(Type.String()),
+  players: Type.Record(Type.String(), CorePlayerData),
+  random: CoreRandomData,
+  stack: Type.Array(Type.String()),
+  started: Type.Boolean(),
+  void: Type.Array(Type.String()),
+});
+export type CoreStateData = Type.Static<typeof CoreStateData>;
+export const CoreStateOptions = Type.Object({
+  cards: Type.Optional(Type.Record(Type.String(), CoreCardOptions)),
+  dimensions: Type.Number(),
+  events: Type.Optional(Type.Record(Type.String(), CoreEventOptions)),
+  field: Type.Optional(Type.Record(Type.String(), Type.Array(Type.String()))),
+  objects: Type.Optional(Type.Record(Type.String(), CoreObjectOptions)),
+  order: Type.Optional(Type.Array(Type.String())),
+  players: Type.Optional(Type.Record(Type.String(), CorePlayerOptions)),
+  random: Type.Optional(CoreRandomOptions),
+  stack: Type.Optional(Type.Array(Type.String())),
+  started: Type.Optional(Type.Boolean()),
+  void: Type.Optional(Type.Array(Type.String())),
+});
+export type CoreStateOptions = Type.Static<typeof CoreStateOptions>;
 
 export class CoreState {
   cards = new Map<string, CoreCard>();
@@ -352,16 +347,6 @@ export class CoreState {
     return objects;
   }
 
-  toDestination({ objects, position, index }: CoreDestinationData): CoreDestination | undefined {
-    const pos = this.toPosition(position);
-    if (!pos) return;
-    const destination: CoreDestination = { objects: this.getObjects(objects), position: pos };
-    if (!index) return destination;
-    const idx = this.toObjectIndex(index);
-    if (idx) destination.index = idx;
-    return destination;
-  }
-
   toJSON(): CoreStateData {
     const {
       cards,
@@ -392,28 +377,6 @@ export class CoreState {
       void: voidZone.values().toArray(),
     };
     return data;
-  }
-
-  toObjectIndex({ side, target }: CoreObjectIndexData): CoreObjectIndex | undefined {
-    const object = this.getObject(target);
-    if (object) return { side, target: object };
-  }
-
-  toPosition(data: CorePositionData): CorePosition | undefined {
-    switch (data.zone) {
-      case CORE_FIELD_ZONE:
-        return {
-          zone: data.zone,
-          coordinates: CoreTuple.from(data.coordinates),
-          direction: data.direction,
-        };
-
-      case CORE_VOID_ZONE:
-        return { zone: data.zone };
-    }
-
-    const player = this.getPlayer(data.player);
-    if (player) return { zone: data.zone, player };
   }
 
   transfer(
