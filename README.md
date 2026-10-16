@@ -1,1 +1,2 @@
-# Refresh: Card Game - Core
+# Refresh: Card Game - TypeScript Core
+

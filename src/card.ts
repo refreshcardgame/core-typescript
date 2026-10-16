@@ -1,4 +1,5 @@
 import { Type } from "typebox";
+import { Compile } from "typebox/schema";
 import { CoreColor } from "./color.ts";
 import { CORE_CARD_TYPE, CoreCardType } from "./constants/card.ts";
 import type { CoreGame } from "./game.ts";
@@ -22,10 +23,11 @@ export const CoreCardData = Type.Interface([CoreCardPayload, CoreCardInformation
 });
 export type CoreCardData = Type.Static<typeof CoreCardData>;
 export const CoreCardOptions = Type.Intersect([
-  Type.Partial(Type.Omit(CoreCardData, ["name"])),
+  Type.Partial(Type.Omit(CoreCardData, ["name", "type"])),
   CoreNamed,
 ]);
 export type CoreCardOptions = Type.Static<typeof CoreCardOptions>;
+export const CoreCardOptionsValidator = Compile(CoreCardOptions);
 
 export class CoreCard {
   attack?: number;

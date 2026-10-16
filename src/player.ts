@@ -42,7 +42,7 @@ export const CorePlayerData = Type.Interface([CorePlayerPayload], {
 });
 export type CorePlayerData = Type.Static<typeof CorePlayerData>;
 export const CorePlayerOptions = Type.Intersect([
-  Type.Partial(Type.Omit(CorePlayerData, ["id", "starting"])),
+  Type.Partial(Type.Omit(CorePlayerData, ["id", "starting", "type"])),
   Type.Pick(CorePlayerData, ["id", "starting"]),
 ]);
 export type CorePlayerOptions = Type.Static<typeof CorePlayerOptions>;

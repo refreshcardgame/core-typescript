@@ -35,7 +35,13 @@ async function buildFile(filePath: string): Promise<void> {
 
   log(`Building ${relative(PACKAGE_DIR, filePath)}`);
 
-  await build({ ...esbuildOptions, entryPoints: [filePath] });
+  const relativeOutputPath = relative(SRC_DIR, filePath).replace(/\.ts$/, "");
+
+  await build({
+    ...esbuildOptions,
+    entryPoints: [{ in: filePath, out: relativeOutputPath }],
+    outbase: SRC_DIR,
+  });
 }
 
 async function flushQueue(): Promise<void> {

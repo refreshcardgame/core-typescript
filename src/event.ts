@@ -64,7 +64,7 @@ export type CoreEventData = Type.Static<typeof CoreEventData>;
 export type CoreEventPriority = OverrideProperties<CoreEventPriorityData, { passed: Set<string> }>;
 export const CoreEventOptions = Type.Intersect([
   Type.Partial(
-    Type.Interface([Type.Omit(CoreEventData, ["name", "priority"])], {
+    Type.Interface([Type.Omit(CoreEventData, ["name", "priority", "type"])], {
       priority: Type.Partial(CoreEventPriorityData),
     }),
   ),

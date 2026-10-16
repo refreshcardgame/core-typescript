@@ -18,7 +18,7 @@ export type CoreObjectInformation = Type.Static<typeof CoreObjectInformation>;
 export const CoreObjectData = Type.Intersect([CoreObjectInformation, CoreObjectPayload]);
 export type CoreObjectData = Type.Static<typeof CoreObjectData>;
 export const CoreObjectOptions = Type.Intersect([
-  Type.Partial(Type.Omit(CoreObjectData, ["name"])),
+  Type.Partial(Type.Omit(CoreObjectData, ["name", "type"])),
   CoreNamed,
 ]);
 export type CoreObjectOptions = Type.Static<typeof CoreObjectOptions>;
