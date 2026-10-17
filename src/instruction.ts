@@ -45,7 +45,7 @@ import { isDestinationData, toDestination, type CoreDestination } from "./positi
 import {
   CoreGenericRequest,
   CoreRequest,
-  type CoreRequestFields,
+  type CoreRequestForm,
   type CoreResponse,
 } from "./runner.ts";
 import { CoreTyped } from "./type.ts";
@@ -466,11 +466,11 @@ const players: CoreInstructionHandler<CorePlayersInstruction> = ({ game: { state
 const request: CoreInstructionHandler<CoreRequestInstruction> = (event, { request }, response) => {
   const evaluatedRequest: CoreRequest = {};
 
-  for (const [player, fields] of Object.entries(request)) {
-    const requestFields: CoreRequestFields = (evaluatedRequest[player] = {});
+  for (const [player, form] of Object.entries(request)) {
+    const requestForm: CoreRequestForm = (evaluatedRequest[player] = {});
 
-    for (const [key, field] of Object.entries(fields)) {
-      requestFields[key] = {
+    for (const [key, field] of Object.entries(form)) {
+      requestForm[key] = {
         ...field,
         options: field.options.map((option) => {
           let evaluatedOption = evaluate(event, option, response);

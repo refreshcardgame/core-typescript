@@ -19,33 +19,33 @@ export type CoreRequestField<TOption = CoreOptionGenericEquals> = CoreCall<
   typeof CoreRequestField,
   [TOption]
 >;
-export const CoreGenericRequestFields = Type.Record(Type.String(), CoreGenericRequestField);
-export const CoreRequestFields = Type.Generic([CoreOptionGeneric], CoreGenericRequestFields);
-export type CoreRequestFields<TOption = CoreOptionGenericEquals> = CoreCall<
-  typeof CoreRequestFields,
+export const CoreGenericRequestForm = Type.Record(Type.String(), CoreGenericRequestField);
+export const CoreRequestForm = Type.Generic([CoreOptionGeneric], CoreGenericRequestForm);
+export type CoreRequestForm<TOption = CoreOptionGenericEquals> = CoreCall<
+  typeof CoreRequestForm,
   [TOption]
 >;
-export const CoreGenericRequest = Type.Record(Type.String(), CoreGenericRequestFields);
+export const CoreGenericRequest = Type.Record(Type.String(), CoreGenericRequestForm);
 export const CoreRequest = Type.Generic([CoreOptionGeneric], CoreGenericRequest);
 export type CoreRequest<TOption = CoreOptionGenericEquals> = CoreCall<
   typeof CoreRequest,
   [TOption]
 >;
 
-export const CoreGenericResponseFields = Type.Record(Type.String(), Type.Array(CoreOptionRef));
-export const CoreResponseFields = Type.Generic([CoreOptionGeneric], CoreGenericResponseFields);
-export type CoreResponseFields<TOption = CoreOptionGenericEquals> = CoreCall<
-  typeof CoreResponseFields,
+export const CoreGenericResponseForm = Type.Record(Type.String(), Type.Array(CoreOptionRef));
+export const CoreResponseForm = Type.Generic([CoreOptionGeneric], CoreGenericResponseForm);
+export type CoreResponseForm<TOption = CoreOptionGenericEquals> = CoreCall<
+  typeof CoreResponseForm,
   [TOption]
 >;
-export const CoreGenericResponse = Type.Record(Type.String(), CoreGenericResponseFields);
+export const CoreGenericResponse = Type.Record(Type.String(), CoreGenericResponseForm);
 export const CoreResponse = Type.Generic([CoreOptionGeneric], CoreGenericResponse);
 export type CoreResponse<TOption = CoreOptionGenericEquals> = CoreCall<
   typeof CoreResponse,
   [TOption]
 >;
-export const CoreRawResponseFields = Type.Call(CoreResponseFields, [Type.Number()]);
-export type CoreRawResponseFields = Type.Static<typeof CoreRawResponseFields>;
+export const CoreRawResponseForm = Type.Call(CoreResponseForm, [Type.Number()]);
+export type CoreRawResponseForm = Type.Static<typeof CoreRawResponseForm>;
 export const CoreRawResponse = Type.Call(CoreResponse, [Type.Number()]);
 export type CoreRawResponse = Type.Static<typeof CoreRawResponse>;
 export type CoreRunner = Iterator<CoreRequest, boolean, CoreRawResponse>;
@@ -56,12 +56,12 @@ export function validateResponse(
   request: CoreRequest = {},
   response: CoreRawResponse = {},
 ): boolean {
-  for (const [player, fields] of Object.entries(request)) {
-    const responseFields = response[player];
-    if (!responseFields) return false;
+  for (const [player, form] of Object.entries(request)) {
+    const responseForm = response[player];
+    if (!responseForm) return false;
 
-    for (const [field, { max, min, options }] of Object.entries(fields)) {
-      const responseOptions = responseFields[field];
+    for (const [field, { max, min, options }] of Object.entries(form)) {
+      const responseOptions = responseForm[field];
       if (!responseOptions) return false;
       const { length } = responseOptions;
       if (length < min || length > max || !responseOptions.every((index) => index in options))

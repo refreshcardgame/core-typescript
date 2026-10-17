@@ -24,7 +24,7 @@ import {
   wrapResult,
   type CoreRawResponse,
   type CoreResponse,
-  type CoreResponseFields,
+  type CoreResponseForm,
   type CoreRunner,
   type CoreRunnerResult,
 } from "./runner.ts";
@@ -139,12 +139,12 @@ export class CoreEvent implements CoreRunner {
   getResponse(rawResponse?: CoreRawResponse): CoreResponse {
     const response: CoreResponse = {};
 
-    for (const [player, fields] of Object.entries(this.request ?? {})) {
-      const responseFields: CoreResponseFields = (response[player] = {});
+    for (const [player, form] of Object.entries(this.request ?? {})) {
+      const responseForm: CoreResponseForm = (response[player] = {});
 
-      for (const [field, { options }] of Object.entries(fields)) {
+      for (const [field, { options }] of Object.entries(form)) {
         const rawFieldResponse = rawResponse?.[player]?.[field] ?? [];
-        responseFields[field] = rawFieldResponse.map((index) => {
+        responseForm[field] = rawFieldResponse.map((index) => {
           let option = options[index];
           if (isObtainablePayload(option)) option = this.game.state.get(option);
           return option;
