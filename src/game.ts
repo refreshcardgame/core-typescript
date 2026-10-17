@@ -43,6 +43,7 @@ export class CoreGame implements CoreRunner {
     if (!this.state.started) return wrapResult();
     const result = this.state.getCurrentEvent()?.next(response);
     if (!result) return wrapResult();
+    this.state.version++;
     if (!result.done) return result;
     this.state.stack.pop();
     return wrapResult();

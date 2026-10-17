@@ -35,6 +35,7 @@ export const CoreStateData = Type.Object({
   random: CoreRandomData,
   stack: Type.Array(Type.String()),
   started: Type.Boolean(),
+  version: Type.String(),
   void: Type.Array(Type.String()),
 });
 export type CoreStateData = Type.Static<typeof CoreStateData>;
@@ -49,6 +50,7 @@ export const CoreStateOptions = Type.Object({
   random: Type.Optional(CoreRandomOptions),
   stack: Type.Optional(Type.Array(Type.String())),
   started: Type.Optional(Type.Boolean()),
+  version: Type.Optional(Type.String()),
   void: Type.Optional(Type.Array(Type.String())),
 });
 export type CoreStateOptions = Type.Static<typeof CoreStateOptions>;
@@ -65,6 +67,7 @@ export class CoreState {
   random: CoreRandom;
   stack: Stack<string, string>;
   started: boolean;
+  version: bigint;
   void: Set<string>;
 
   constructor(
@@ -80,6 +83,7 @@ export class CoreState {
       random,
       stack,
       started,
+      version,
       void: voidZone,
     }: CoreStateOptions,
   ) {
@@ -112,6 +116,7 @@ export class CoreState {
     this.random = new CoreRandom(random);
     this.stack = new Stack(stack);
     this.started = started ?? false;
+    this.version = typeof version === "string" ? BigInt(version) : 0n;
     this.void = new Set(voidZone);
   }
 
@@ -359,6 +364,7 @@ export class CoreState {
       random,
       stack: { elements },
       started,
+      version,
       void: voidZone,
     } = this;
     const data: CoreStateData = {
@@ -374,6 +380,7 @@ export class CoreState {
       random: random.toJSON(),
       stack: elements,
       started,
+      version: version.toString(),
       void: voidZone.values().toArray(),
     };
     return data;
