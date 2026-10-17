@@ -24,15 +24,18 @@ import { CoreState, type CoreStateOptions } from "./state.ts";
 export interface CoreGameOptions {
   definition?: CoreDefinitionOptions;
   state: CoreStateOptions;
+  version?: bigint;
 }
 
 export class CoreGame implements CoreRunner {
   definition: CoreDefinition;
   state: CoreState;
+  version: bigint;
 
-  constructor({ definition, state }: CoreGameOptions) {
+  constructor({ definition, state, version }: CoreGameOptions) {
     this.definition = new CoreDefinition(definition);
     this.state = new CoreState(this, state);
+    this.version = version ?? 0n;
   }
 
   initial(): CoreEvent {
@@ -43,7 +46,7 @@ export class CoreGame implements CoreRunner {
     if (!this.state.started) return wrapResult();
     const result = this.state.getCurrentEvent()?.next(response);
     if (!result) return wrapResult();
-    this.state.version++;
+    this.version++;
     if (!result.done) return result;
     this.state.stack.pop();
     return wrapResult();
