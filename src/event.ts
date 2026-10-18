@@ -1,12 +1,16 @@
+import { DoublyLinkedList } from "data-structure-typed";
 import { capitalize } from "lodash-es";
 import type { OverrideProperties } from "type-fest";
 import { Type } from "typebox";
 import {
   CORE_AFTER_EVENT_PHASE,
+  CORE_BASIC_ACTIONS,
   CORE_BEFORE_EVENT_PHASE,
   CORE_EVENT_TYPE,
   CORE_REGISTER_EVENT_PHASE,
   CORE_RESOLVE_EVENT_PHASE,
+  CORE_ROTATE_ACTION,
+  CORE_SIMPLE_BASIC_ACTIONS,
   CoreAfterPhase,
   CoreBeforePhase,
   CoreEventType,
@@ -40,6 +44,7 @@ const CoreEventPhase = Type.Union([
 ]);
 type CoreEventPhase = Type.Static<typeof CoreEventPhase>;
 export const CoreEventPriorityData = Type.Object({
+  actions: Type.Array(Type.String()),
   passed: Type.Array(Type.String()),
   pointer: Type.Optional(Type.String()),
   step: Type.Number(),
@@ -49,6 +54,7 @@ export const CoreEventData = Type.Interface([CoreEventPayload, CoreNamed], {
   aliases: Type.Array(Type.String()),
   character: Type.Optional(Type.String()),
   finished: Type.Boolean(),
+  parent: Type.Optional(Type.String()),
   phase: CoreEventPhase,
   player: Type.Optional(Type.String()),
   priority: CoreEventPriorityData,
@@ -71,6 +77,7 @@ export const CoreEventOptions = Type.Intersect([
   CoreNamed,
 ]);
 export type CoreEventOptions = Type.Static<typeof CoreEventOptions>;
+export const basicActions = [CORE_ROTATE_ACTION];
 
 export class CoreEvent implements CoreRunner {
   aliases: Set<string>;
@@ -79,6 +86,7 @@ export class CoreEvent implements CoreRunner {
   finished: boolean;
   id: string;
   name: string;
+  parent?: string;
   phase: CoreEventPhase;
   player?: string;
   priority: CoreEventPriority;
@@ -99,9 +107,10 @@ export class CoreEvent implements CoreRunner {
       finished,
       id,
       name,
+      parent,
       phase,
       player,
-      priority: { passed, step: priorityStep, pointer } = {},
+      priority: { actions = [], passed, step: priorityStep, pointer } = {},
       register,
       resolve,
       result,
@@ -116,9 +125,10 @@ export class CoreEvent implements CoreRunner {
     this.aliases = new Set(aliases);
     if (typeof character === "string") this.character = character;
     this.finished = finished ?? false;
+    if (typeof parent === "string") this.parent = parent;
     this.phase = phase ?? CORE_REGISTER_EVENT_PHASE;
     if (typeof player === "string") this.player = player;
-    this.priority = { passed: new Set(passed), step: priorityStep ?? 0 };
+    this.priority = { actions, passed: new Set(passed), step: priorityStep ?? 0 };
     if (typeof pointer === "string") this.priority.pointer = pointer;
     this.register = register ?? [];
     this.resolve = resolve ?? [];
@@ -228,7 +238,7 @@ export class CoreEvent implements CoreRunner {
 
   nextResolve(response: CoreResponse): CoreRunnerResult {
     if (this.timings.length) {
-      const result = this.trigger(this.timings, response);
+      const result = this.trigger(this.timings.slice(), response);
       if (!result.done) return result;
     }
 
@@ -265,9 +275,10 @@ export class CoreEvent implements CoreRunner {
       finished,
       id,
       name,
+      parent,
       phase,
       player,
-      priority: { passed, pointer, step: priorityStep },
+      priority: { actions, passed, pointer, step: priorityStep },
       register,
       request,
       resolve,
@@ -284,20 +295,22 @@ export class CoreEvent implements CoreRunner {
       name,
       phase,
       priority: {
+        actions: actions.slice(),
         passed: passed.values().toArray(),
         step: priorityStep,
       },
-      register,
-      resolve,
+      register: structuredClone(register),
+      resolve: structuredClone(resolve),
       step,
-      timings,
+      timings: timings.slice(),
       type,
       variables: Object.fromEntries(variables.entries().map(([key, value]) => [key, value])),
     };
     if (typeof character === "string") data.character = character;
+    if (typeof parent === "string") data.parent = parent;
     if (typeof player === "string") data.player = player;
     if (typeof pointer === "string") data.priority.pointer = pointer;
-    if (request) data.request = request;
+    if (request) data.request = structuredClone(request);
     if (typeof result === "boolean") data.result = result;
     return data;
   }
@@ -325,10 +338,17 @@ export class CoreEvent implements CoreRunner {
         }
 
         this.priority.pointer = nextPriorityPointer;
-        timings = timings.slice();
         this.timings.length = 0;
         this.timings.push(...timings);
         /** @todo */
+        const available = new DoublyLinkedList<string, string>(
+          this.game.state.dimensions > 1 ? CORE_BASIC_ACTIONS : CORE_SIMPLE_BASIC_ACTIONS,
+        );
+
+        for (const action of this.priority.actions) {
+          available.delete(action);
+        }
+
         this.priority.step++;
         return wrapResult(this.request);
       }

@@ -16,6 +16,7 @@ export const CoreCardInformation = Type.Interface([CoreNamed], {
   defense: Type.Optional(Type.Number()),
   owner: Type.Optional(Type.String()),
   types: Type.Array(Type.String()),
+  usage: Type.Optional(Type.String()),
 });
 export type CoreCardInformation = Type.Static<typeof CoreCardInformation>;
 export const CoreCardData = Type.Interface([CoreCardPayload, CoreCardInformation], {
@@ -40,10 +41,11 @@ export class CoreCard {
   owner?: string;
   type = CORE_CARD_TYPE;
   types: string[];
+  usage?: string;
 
   constructor(
     game: CoreGame,
-    { attack, colors, defense, id, name, object, owner, types }: CoreCardOptions,
+    { attack, colors, defense, id, name, object, owner, types, usage }: CoreCardOptions,
   ) {
     this.game = game;
     this.name = name;
@@ -54,6 +56,7 @@ export class CoreCard {
     if (typeof object === "string") this.object = object;
     if (typeof owner === "string") this.owner = owner;
     this.types = types ?? [];
+    if (typeof usage === "string") this.usage = usage;
   }
 
   getObject(): CoreObject | undefined {
@@ -65,12 +68,13 @@ export class CoreCard {
   }
 
   toJSON(): CoreCardData {
-    const { attack, colors, defense, id, name, object, owner, type, types } = this;
-    const data: CoreCardData = { colors, id, name, type, types };
+    const { attack, colors, defense, id, name, object, owner, type, types, usage } = this;
+    const data: CoreCardData = { colors: colors.slice(), id, name, type, types: types.slice() };
     if (typeof attack === "number") data.attack = attack;
     if (typeof defense === "number") data.defense = defense;
     if (typeof object === "string") data.object = object;
     if (typeof owner === "string") data.owner = owner;
+    if (typeof usage === "string") data.usage = usage;
     return data;
   }
 }

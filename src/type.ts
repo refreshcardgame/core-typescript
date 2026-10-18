@@ -1,5 +1,5 @@
 import { Type } from "typebox";
-import { CORE_TYPE_GENERIC } from "./constants/typed.ts";
+import { CORE_TYPE_GENERIC } from "./constants/type.ts";
 
 export type CoreCall<Target extends Type.TSchema, Arguments extends unknown[]> = Type.Static<
   ReturnType<

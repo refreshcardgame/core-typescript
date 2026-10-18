@@ -23,4 +23,4 @@ export * from "./constants/instruction.ts";
 export * from "./constants/object.ts";
 export * from "./constants/player.ts";
 export * from "./constants/position.ts";
-export * from "./constants/typed.ts";
+export * from "./constants/type.ts";

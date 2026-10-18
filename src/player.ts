@@ -176,14 +176,14 @@ export class CorePlayer {
   toJSON(): CorePlayerData {
     const { characters, deck, extra, hand, id, integrity, recycle, starting, type } = this;
     const data: CorePlayerData = {
-      characters,
+      characters: characters.slice(),
       deck: deck.toArray(),
       extra: extra.toArray(),
       hand: hand.toArray(),
       id,
       integrity,
       recycle: recycle.toArray(),
-      starting,
+      starting: structuredClone(starting),
       type,
     };
     return data;

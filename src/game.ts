@@ -3,7 +3,7 @@ import {
   CORE_DECK_ZONE,
   CORE_EXTRA_ZONE,
   CORE_HAND_ZONE,
-  CORE_SOUTH_CARDINAL,
+  CORE_NORTH_CARDINAL,
 } from "./constants/position.ts";
 import { CoreDefinition, type CoreDefinitionOptions } from "./definition.ts";
 import { CoreEvent, type CoreEventOptions } from "./event.ts";
@@ -88,7 +88,7 @@ export class CoreGame implements CoreRunner {
         } else {
           this.state.inField(object, {
             coordinates: new CoreTuple(this.state.field.size),
-            direction: CORE_SOUTH_CARDINAL,
+            direction: CORE_NORTH_CARDINAL,
           });
           player.characters.push(object.id);
         }

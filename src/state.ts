@@ -325,6 +325,8 @@ export class CoreState {
   run(event: CoreEvent): CoreEvent {
     const { id } = event;
     this.events.set(id, event);
+    const parent = this.stack.peek();
+    if (typeof parent === "string") event.parent = parent;
     this.stack.push(id);
     return event;
   }
@@ -372,7 +374,7 @@ export class CoreState {
       order: order.toArray(),
       players: Object.fromEntries(players.entries().map(([id, player]) => [id, player.toJSON()])),
       random: random.toJSON(),
-      stack: elements,
+      stack: elements.slice(),
       started,
       void: voidZone.values().toArray(),
     };

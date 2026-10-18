@@ -74,8 +74,15 @@ export class CoreObject {
     return object;
   }
 
-  extract(): CoreObject[] {
-    const objects = this.getCards().map(CoreObject.from);
+  extract(exact = false): CoreObject[] {
+    const objects = exact
+      ? [new CoreObject(this.game, this.toJSON())]
+      : this.getCards().map(CoreObject.from);
+
+    for (const object of objects) {
+      object.parent = this.id;
+    }
+
     this.cards.length = 0;
     return objects;
   }

@@ -1,6 +1,23 @@
 import { Type } from "typebox";
+import { CORE_NAMESPACE } from "./type.ts";
 
 export const CORE_EVENT_TYPE = "event" as const;
+
+export const CORE_FIGHT_ACTION = `${CORE_NAMESPACE}:fight` as const;
+export const CORE_MOVE_ACTION = `${CORE_NAMESPACE}:move` as const;
+export const CORE_ROTATE_ACTION = `${CORE_NAMESPACE}:rotate` as const;
+export const CORE_USE_ACTION = `${CORE_NAMESPACE}:use` as const;
+export const CORE_BASIC_ACTIONS = [
+  CORE_FIGHT_ACTION,
+  CORE_MOVE_ACTION,
+  CORE_ROTATE_ACTION,
+  CORE_USE_ACTION,
+] as const;
+export const CORE_SIMPLE_BASIC_ACTIONS = [
+  CORE_FIGHT_ACTION,
+  CORE_ROTATE_ACTION,
+  CORE_USE_ACTION,
+] as const;
 
 export const CORE_ROUND_EVENT_NAME = "round" as const;
 export const CORE_TURN_EVENT_NAME = "turn" as const;
