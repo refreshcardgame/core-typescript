@@ -6,7 +6,7 @@ import {
   CORE_NORTH_CARDINAL,
 } from "./constants/position.ts";
 import { CoreDefinition, type CoreDefinitionOptions } from "./definition.ts";
-import { CoreEvent, type CoreEventOptions } from "./event.ts";
+import { CoreEvent, CoreEventOptionsValidator } from "./event.ts";
 import initial from "./events/initial.json" with { type: "json" };
 import round from "./events/round.json" with { type: "json" };
 import transfer from "./events/transfer.json" with { type: "json" };
@@ -39,7 +39,7 @@ export class CoreGame implements CoreRunner {
   }
 
   initial(): CoreEvent {
-    return this.state.run(new CoreEvent(this, initial as CoreEventOptions));
+    return this.state.run(new CoreEvent(this, CoreEventOptionsValidator.Parse(initial)));
   }
 
   next(response?: CoreRawResponse): CoreRunnerResult {
@@ -53,7 +53,7 @@ export class CoreGame implements CoreRunner {
   }
 
   round(): CoreEvent {
-    return this.state.run(new CoreEvent(this, round as CoreEventOptions));
+    return this.state.run(new CoreEvent(this, CoreEventOptionsValidator.Parse(round)));
   }
 
   start(): this {
@@ -102,7 +102,7 @@ export class CoreGame implements CoreRunner {
   transfer(destinations: CoreDestination[]): CoreEvent {
     return this.state.run(
       new CoreEvent(this, {
-        ...(transfer as CoreEventOptions),
+        ...CoreEventOptionsValidator.Parse(transfer),
         variables: { destinations: destinations.map(toDestinationData) },
       }),
     );

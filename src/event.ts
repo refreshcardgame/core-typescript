@@ -2,6 +2,7 @@ import { DoublyLinkedList } from "data-structure-typed";
 import { capitalize } from "lodash-es";
 import type { OverrideProperties } from "type-fest";
 import { Type } from "typebox";
+import { Compile, Validator } from "typebox/schema";
 import {
   CORE_AFTER_EVENT_PHASE,
   CORE_BASIC_ACTIONS,
@@ -17,13 +18,20 @@ import {
   CoreRegisterPhase,
   CoreResolvePhase,
 } from "./constants/event.ts";
+import { CORE_HAND_ZONE } from "./constants/position.ts";
 import type { CoreGame } from "./game.ts";
-import { CoreInstruction, evaluate } from "./instruction.ts";
-import { toRotated } from "./iterator.ts";
+import {
+  CoreInstruction,
+  CoreInstructionOrLiteral,
+  type CoreInstructionHandlers,
+} from "./instruction.ts";
+import { takeRight, toRotated } from "./iterator.ts";
 import { CoreTypedPayload, isObtainablePayload, toTypedPayload } from "./payload.ts";
-import type { CorePlayer } from "./player.ts";
+import { CorePlayer } from "./player.ts";
+import { isDestinationData, toDestination, type CoreDestination } from "./position.ts";
 import {
   CoreRequest,
+  CoreRequestForm,
   validateResponse,
   wrapResult,
   type CoreRawResponse,
@@ -77,7 +85,217 @@ export const CoreEventOptions = Type.Intersect([
   CoreNamed,
 ]);
 export type CoreEventOptions = Type.Static<typeof CoreEventOptions>;
+export const CoreEventOptionsValidator: Validator<typeof CoreEventOptions> =
+  Compile(CoreEventOptions);
 export const basicActions = [CORE_ROTATE_ACTION];
+
+function parse(event: CoreEvent, value: unknown): unknown {
+  if (Array.isArray(value)) return value.map((v) => parse(event, v));
+  if (isObtainablePayload(value)) return event.game.state.get(value);
+  if (typeof value === "object" && value !== null && "zone" in value && "player" in value) {
+    return value;
+  }
+  return value;
+}
+
+const handlers: CoreInstructionHandlers = {
+  add: (event, { left, right }, response) =>
+    Number(event.evaluate(left, response)) + Number(event.evaluate(right, response)),
+  and: (event, { left, right }, response) =>
+    event.evaluate(left, response) && event.evaluate(right, response),
+  draw: (event, instruction, response) => {
+    if ("player" in instruction) {
+      const evaluatedPlayer = event.evaluate(instruction.player, response);
+      return (
+        evaluatedPlayer instanceof CorePlayer &&
+        event.game.transfer([
+          {
+            objects: event.game.state.getObjects(
+              takeRight(evaluatedPlayer.deck, Number(event.evaluate(instruction.count, response))),
+            ),
+            position: { zone: CORE_HAND_ZONE, player: evaluatedPlayer },
+          },
+        ])
+      );
+    }
+
+    const evaluatedPlayers = event.evaluate(instruction.players, response);
+    if (!Array.isArray(evaluatedPlayers)) return;
+    const destinations: CoreDestination[] = [];
+
+    if (typeof instruction.each === "undefined")
+      for (const player of evaluatedPlayers.filter((player) => player instanceof CorePlayer)) {
+        destinations.push({
+          objects: event.game.state.getObjects(
+            takeRight(player.deck, Number(event.evaluate(instruction.count, response))),
+          ),
+          position: { zone: CORE_HAND_ZONE, player },
+        });
+      }
+    else {
+      const name = String(event.evaluate(instruction.each, response));
+      const previous = event.getVariable(name);
+
+      for (const player of evaluatedPlayers.filter((player) => player instanceof CorePlayer)) {
+        event.setVariable(name, player);
+        destinations.push({
+          objects: event.game.state.getObjects(
+            takeRight(player.deck, Number(event.evaluate(instruction.count, response))),
+          ),
+          position: { zone: CORE_HAND_ZONE, player },
+        });
+      }
+
+      event.setVariable(name, previous);
+    }
+
+    return event.game.transfer(destinations);
+  },
+  equal: (event, { left, right }, response) =>
+    event.evaluate(left, response) === event.evaluate(right, response),
+  flatMap: (event, { each, of, to }, response) => {
+    const array = event.evaluate(of, response);
+    if (!Array.isArray(array)) return;
+    const name = String(event.evaluate(each, response));
+    const previous = event.getVariable(name);
+    const result = array.flatMap((value) => {
+      event.setVariable(name, value);
+      return event.evaluate(to, response);
+    });
+    event.setVariable(name, previous);
+    return result;
+  },
+  for: (event, { each, of, do: doInstruction }, response) => {
+    const array = event.evaluate(of, response);
+    if (!Array.isArray(array)) return;
+    const name = String(event.evaluate(each, response));
+    const previous = event.getVariable(name);
+
+    for (const value of array) {
+      event.setVariable(name, value);
+      if (doInstruction) event.evaluate(doInstruction, response);
+    }
+
+    event.setVariable(name, previous);
+  },
+  get: (event, { property, from }, response) => {
+    const evaluatedFrom = event.evaluate(from, response);
+    if (typeof evaluatedFrom !== "object" || evaluatedFrom === null) return;
+    const evaluatedProperty = event.evaluate(property, response);
+    if (
+      (typeof evaluatedProperty === "string" || typeof evaluatedProperty === "number") &&
+      evaluatedProperty in evaluatedFrom
+    )
+      return parse(event, Reflect.get(evaluatedFrom, evaluatedProperty) as unknown);
+  },
+  goto: (event, { target }, response) => {
+    event.step = Number(event.evaluate(target, response));
+  },
+  greater: (event, { left, right }, response) =>
+    Number(event.evaluate(left, response)) > Number(event.evaluate(right, response)),
+  if: (event, { condition, then: thenInstruction, else: elseInstruction }, response) => {
+    if (event.evaluate(condition, response)) return event.evaluate(thenInstruction, response);
+    if (typeof elseInstruction !== "undefined") return event.evaluate(elseInstruction, response);
+  },
+  less: (event, { left, right }, response) =>
+    Number(event.evaluate(left, response)) < Number(event.evaluate(right, response)),
+  map: (event, { each, of, to }, response) => {
+    const array = event.evaluate(of, response);
+    if (!Array.isArray(array)) return;
+    const name = String(event.evaluate(each, response));
+    const previous = event.getVariable(name);
+    const result = array.map((value) => {
+      event.setVariable(name, value);
+      return event.evaluate(to, response);
+    });
+    event.setVariable(name, previous);
+    return result;
+  },
+  multiply: (event, { left, right }, response) =>
+    Number(event.evaluate(left, response)) * Number(event.evaluate(right, response)),
+  not: (event, { value }, response) => !event.evaluate(value, response),
+  notEqual: (event, { left, right }, response) =>
+    event.evaluate(left, response) !== event.evaluate(right, response),
+  or: (event, { left, right }, response) =>
+    // oxlint-disable-next-line typescript/prefer-nullish-coalescing
+    event.evaluate(left, response) || event.evaluate(right, response),
+  phase: (event, { name, player }, response) => {
+    const evaluated = event.evaluate(player, response);
+    if (evaluated instanceof CorePlayer) return evaluated[`${name}Phase`]();
+  },
+  player: (event, { index }, response) =>
+    typeof index === "undefined"
+      ? event.getPlayer()
+      : event.game.state.getPlayer(Number(event.evaluate(index, response))),
+  players: ({ game: { state } }) => state.getAllPlayers(),
+  request: (event, { request }, response) => {
+    const evaluatedRequest: CoreRequest = {};
+
+    for (const [player, form] of Object.entries(request)) {
+      const requestForm: CoreRequestForm = (evaluatedRequest[player] = {});
+
+      for (const [key, field] of Object.entries(form)) {
+        requestForm[key] = {
+          ...field,
+          options: field.options.map((option) => {
+            let evaluatedOption = event.evaluate(option, response);
+            if (isObtainablePayload(evaluatedOption))
+              evaluatedOption = toTypedPayload(evaluatedOption);
+            return evaluatedOption;
+          }),
+        };
+      }
+    }
+
+    event.request = evaluatedRequest;
+  },
+  response: (event, { field, index, player }, response) => {
+    const evaluated = event.evaluate(player, response);
+    return response?.[evaluated instanceof CorePlayer ? evaluated.id : String(evaluated)]?.[
+      String(event.evaluate(field, response))
+    ]?.[Number(event.evaluate(index, response))];
+  },
+  return: (event, { value }, response) => {
+    event.result = typeof value === "undefined" ? true : Boolean(event.evaluate(value, response));
+  },
+  round: ({ game }) => game.round(),
+  sequence: (event, { instructions }, response) =>
+    instructions.reduce<unknown>((_, instruction) => event.evaluate(instruction, response), void 0),
+  transfer: (event, { destinations }, response) => {
+    const evaluated = event.evaluate(destinations, response);
+    if (!Array.isArray(evaluated)) return 0;
+    let count = 0;
+
+    for (const { objects, position, index } of evaluated
+      .filter(isDestinationData)
+      .map((data) => toDestination(event.game, data))
+      .filter((destination) => !!destination)) {
+      count += event.game.state.transfer(objects, position, index);
+    }
+
+    return count;
+  },
+  trigger: (event, { timings }, response) => {
+    if (event.phase === CORE_RESOLVE_EVENT_PHASE)
+      return event.trigger(
+        timings.map((instruction) => String(event.evaluate(instruction, response))),
+        response ?? {},
+      );
+  },
+  turn: (event, { player }, response) => {
+    const evaluated = event.evaluate(player, response);
+    if (evaluated instanceof CorePlayer) return evaluated.turn();
+  },
+  variable: (event, { name, set }, response) =>
+    typeof set === "undefined"
+      ? event.getVariable(String(event.evaluate(name, response)))
+      : event.setVariable(String(event.evaluate(name, response)), event.evaluate(set, response)),
+  while: (event, { condition, do: doInstruction }, response) => {
+    while (event.evaluate(condition, response)) {
+      if (doInstruction) event.evaluate(doInstruction, response);
+    }
+  },
+};
 
 export class CoreEvent implements CoreRunner {
   aliases: Set<string>;
@@ -138,6 +356,14 @@ export class CoreEvent implements CoreRunner {
     this.variables = new Map(Object.entries(variables ?? {}).map(([key, value]) => [key, value]));
   }
 
+  evaluate(instruction: CoreInstructionOrLiteral, response?: CoreResponse): unknown {
+    return typeof instruction === "string" ||
+      typeof instruction === "number" ||
+      typeof instruction === "boolean"
+      ? instruction
+      : handlers[instruction.type]?.(this, instruction as never, response);
+  }
+
   getPlayer(): CorePlayer | undefined {
     return this.game.state.getPlayer(this.player);
   }
@@ -181,7 +407,7 @@ export class CoreEvent implements CoreRunner {
 
   nextInstruction(instruction: CoreInstruction, response: CoreResponse): CoreRunnerResult {
     this.step++;
-    evaluate(this, instruction, response);
+    this.evaluate(instruction, response);
     return wrapResult(this.request);
   }
 

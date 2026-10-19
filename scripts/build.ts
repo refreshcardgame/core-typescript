@@ -68,8 +68,11 @@ async function copyJsonAssets(srcDir: string, outDir: string): Promise<void> {
 }
 
 await Promise.all([import("./check.ts"), import("./clean.ts"), import("./lint.ts")]);
-await build({
-  ...esbuildOptions,
-  entryPoints: await getTypeScriptFiles(join(PACKAGE_DIR, "src")),
-});
-await copyJsonAssets(join(PACKAGE_DIR, "src"), join(PACKAGE_DIR, "dist"));
+await Promise.all([
+  build({
+    ...esbuildOptions,
+    entryPoints: await getTypeScriptFiles(join(PACKAGE_DIR, "src")),
+  }),
+  copyJsonAssets(join(PACKAGE_DIR, "src"), join(PACKAGE_DIR, "dist")),
+  import("./schema.ts"),
+]);

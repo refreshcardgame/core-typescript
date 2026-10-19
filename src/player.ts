@@ -13,7 +13,7 @@ import {
   CORE_HAND_ZONE,
   CORE_RECYCLE_ZONE,
 } from "./constants/position.ts";
-import { CoreEvent, type CoreEventOptions } from "./event.ts";
+import { CoreEvent, CoreEventOptionsValidator } from "./event.ts";
 import endPhase from "./events/phases/end.json" with { type: "json" };
 import mainPhase from "./events/phases/main.json" with { type: "json" };
 import startPhase from "./events/phases/start.json" with { type: "json" };
@@ -75,8 +75,9 @@ export class CorePlayer {
   }
 
   endPhase(): CoreEvent {
-    const options: CoreEventOptions = { ...endPhase, player: this.id };
-    return this.game.state.run(new CoreEvent(this.game, options));
+    return this.game.state.run(
+      new CoreEvent(this.game, { ...CoreEventOptionsValidator.Parse(endPhase), player: this.id }),
+    );
   }
 
   getCharacter(index?: number): CoreObject | undefined {
@@ -140,8 +141,9 @@ export class CorePlayer {
   }
 
   mainPhase(): CoreEvent {
-    const options: CoreEventOptions = { ...(mainPhase as CoreEventOptions), player: this.id };
-    return this.game.state.run(new CoreEvent(this.game, options));
+    return this.game.state.run(
+      new CoreEvent(this.game, { ...CoreEventOptionsValidator.Parse(mainPhase), player: this.id }),
+    );
   }
 
   out(objects: CoreObject | CoreObject[]): number {
@@ -164,13 +166,15 @@ export class CorePlayer {
   }
 
   startPhase(): CoreEvent {
-    const options: CoreEventOptions = { ...(startPhase as CoreEventOptions), player: this.id };
-    return this.game.state.run(new CoreEvent(this.game, options));
+    return this.game.state.run(
+      new CoreEvent(this.game, { ...CoreEventOptionsValidator.Parse(startPhase), player: this.id }),
+    );
   }
 
   turn(): CoreEvent {
-    const options: CoreEventOptions = { ...(turn as CoreEventOptions), player: this.id };
-    return this.game.state.run(new CoreEvent(this.game, options));
+    return this.game.state.run(
+      new CoreEvent(this.game, { ...CoreEventOptionsValidator.Parse(turn), player: this.id }),
+    );
   }
 
   toJSON(): CorePlayerData {

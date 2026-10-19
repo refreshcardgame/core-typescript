@@ -17,7 +17,7 @@
         },
         "right": { "type": "get", "property": "length", "from": { "type": "players" } }
       },
-      "then": { "type": "goto", "value": 0 }
+      "then": { "type": "goto", "target": 0 }
     }
   ]
 }
