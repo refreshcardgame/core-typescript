@@ -1,6 +1,8 @@
+import { isObject } from "lodash-es";
 import { Type } from "typebox";
 import { Value } from "typebox/value";
 import {
+  CORE_BUFFER_ZONE,
   CORE_DECK_ZONE,
   CORE_EXTRA_ZONE,
   CORE_FIELD_ZONE,
@@ -8,6 +10,7 @@ import {
   CORE_RECYCLE_ZONE,
   CORE_VOID_ZONE,
   CORE_ZONE_GENERIC,
+  CoreBufferZone,
   CoreCardinals,
   CoreFieldZone,
   CorePlayerZones,
@@ -17,8 +20,8 @@ import {
 import type { CoreGame } from "./game.ts";
 import { CoreTuple } from "./math.ts";
 import type { CoreObject } from "./object.ts";
-import { CorePlayer } from "./player.ts";
-import type { CoreCall, CoreExtends } from "./type.ts";
+import type { CorePlayer } from "./player.ts";
+import { isCoreObject, isCorePlayer, type CoreCall, type CoreExtends } from "./type.ts";
 
 export const CoreCardinal = Type.Index(CoreCardinals, Type.Number());
 export type CoreCardinal = Type.Static<typeof CoreCardinal>;
@@ -30,6 +33,10 @@ type CoreZoneGenericExtends = CoreExtends<typeof CoreZoneGeneric>;
 const CoreZoneRef = Type.Ref(CORE_ZONE_GENERIC);
 export const CoreZoned = Type.Generic([CoreZoneGeneric], Type.Object({ zone: CoreZoneRef }));
 export type CoreZoned<TZone extends CoreZoneGenericExtends> = CoreCall<typeof CoreZoned, [TZone]>;
+
+export type CoreBufferPosition = CoreZoned<CoreBufferZone>;
+export const CoreBufferPositionData = Type.Call(CoreZoned, [CoreBufferZone]);
+export type CoreBufferPositionData = Type.Static<typeof CoreBufferPositionData>;
 
 export type CoreVoidPosition = CoreZoned<CoreVoidZone>;
 export const CoreVoidPositionData = Type.Call(CoreZoned, [CoreVoidZone]);
@@ -59,8 +66,13 @@ export const CorePlayerPositionData = Type.Interface([Type.Call(CoreZoned, [Core
 });
 export type CorePlayerPositionData = Type.Static<typeof CorePlayerPositionData>;
 
-export type CorePosition = CoreFieldPosition | CorePlayerPosition | CoreVoidPosition;
+export type CorePosition =
+  | CoreBufferPosition
+  | CoreFieldPosition
+  | CorePlayerPosition
+  | CoreVoidPosition;
 export const CorePositionData = Type.Union([
+  CoreBufferPositionData,
   CoreFieldPositionData,
   CorePlayerPositionData,
   CoreVoidPositionData,
@@ -94,18 +106,28 @@ export const CoreDestinationData = Type.Object({
 });
 export type CoreDestinationData = Type.Static<typeof CoreDestinationData>;
 
+export function isDestination(destination: unknown): destination is CoreDestination {
+  return (
+    isObject(destination) &&
+    "objects" in destination &&
+    Array.isArray(destination.objects) &&
+    destination.objects.every(isCoreObject) &&
+    "position" in destination &&
+    isPosition(destination.position) &&
+    (!("index" in destination) || isObjectIndex(destination.index))
+  );
+}
+
 export function isDestinationData(data: unknown): data is CoreDestinationData {
   return Value.Check(CoreDestinationData, data);
 }
 
 export function isObjectIndex(data: unknown): data is CoreObjectIndex {
-  return (
-    typeof data === "object" && data !== null && "side" in data && typeof data.side === "string"
-  );
+  return isObject(data) && "side" in data && typeof data.side === "string";
 }
 
 export function isPosition(position: unknown): position is CorePosition {
-  if (typeof position === "object" && position !== null && "zone" in position)
+  if (isObject(position) && "zone" in position)
     switch (position.zone) {
       case CORE_FIELD_ZONE:
         return (
@@ -122,7 +144,7 @@ export function isPosition(position: unknown): position is CorePosition {
       case CORE_EXTRA_ZONE:
       case CORE_HAND_ZONE:
       case CORE_RECYCLE_ZONE:
-        return "player" in position && position.player instanceof CorePlayer;
+        return "player" in position && isCorePlayer(position.player);
     }
 
   return false;
@@ -197,15 +219,16 @@ export function toObjectIndexData({ side, target }: CoreObjectIndex): CoreObject
 
 export function toPosition(game: CoreGame, data: CorePositionData): CorePosition | undefined {
   switch (data.zone) {
+    case CORE_BUFFER_ZONE:
+    case CORE_VOID_ZONE:
+      return { zone: data.zone };
+
     case CORE_FIELD_ZONE:
       return {
         zone: data.zone,
         coordinates: CoreTuple.from(data.coordinates),
         direction: data.direction,
       };
-
-    case CORE_VOID_ZONE:
-      return { zone: data.zone };
   }
 
   const player = game.state.getPlayer(data.player);
@@ -214,15 +237,16 @@ export function toPosition(game: CoreGame, data: CorePositionData): CorePosition
 
 export function toPositionData(position: CorePosition): CorePositionData {
   switch (position.zone) {
+    case CORE_BUFFER_ZONE:
+    case CORE_VOID_ZONE:
+      return { zone: position.zone };
+
     case CORE_FIELD_ZONE:
       return {
         zone: position.zone,
         coordinates: position.coordinates.toString(),
         direction: position.direction,
       };
-
-    case CORE_VOID_ZONE:
-      return { zone: position.zone };
   }
 
   return { zone: position.zone, player: position.player.id };

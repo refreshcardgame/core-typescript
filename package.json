@@ -28,6 +28,7 @@
     "clean": "node ./scripts/clean.ts",
     "export": "node ./scripts/export.ts",
     "lint": "node ./scripts/lint.ts",
+    "schema": "node ./scripts/schema.ts",
     "watch": "node ./scripts/watch.ts"
   },
   "dependencies": {

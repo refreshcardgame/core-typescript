@@ -12,6 +12,7 @@ export const CORE_SIDES = [CORE_AFTER_SIDE, CORE_BEFORE_SIDE] as const;
 
 export const CORE_ZONE_GENERIC = "TZone" as const;
 
+export const CORE_BUFFER_ZONE = "buffer" as const;
 export const CORE_DECK_ZONE = "deck" as const;
 export const CORE_EXTRA_ZONE = "extra" as const;
 export const CORE_FIELD_ZONE = "field" as const;
@@ -44,6 +45,8 @@ export type CoreBeforeSide = Type.Static<typeof CoreBeforeSide>;
 export const CoreSides = Type.Tuple([CoreAfterSide, CoreBeforeSide]);
 export type CoreSides = Type.Static<typeof CoreSides>;
 
+export const CoreBufferZone = Type.Literal(CORE_BUFFER_ZONE);
+export type CoreBufferZone = Type.Static<typeof CoreBufferZone>;
 export const CoreDeckZone = Type.Literal(CORE_DECK_ZONE);
 export type CoreDeckZone = Type.Static<typeof CoreDeckZone>;
 export const CoreExtraZone = Type.Literal(CORE_EXTRA_ZONE);

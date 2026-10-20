@@ -1,9 +1,13 @@
 import { Type } from "typebox";
 import { CoreCardInformation, type CoreCard } from "./card.ts";
 import type { CoreColor } from "./color.ts";
+import { CORE_CHARACTER_CARD_TYPE } from "./constants/card.ts";
 import { CORE_OBJECT_TYPE, CoreObjectType } from "./constants/object.ts";
+import { CORE_FIELD_ZONE } from "./constants/position.ts";
+import { CoreEvent, CoreEventOptionsValidator } from "./event.ts";
+import use from "./events/use.json" with { type: "json" };
 import type { CoreGame } from "./game.ts";
-import { CoreTypedPayload } from "./payload.ts";
+import { CoreTypedPayload, toTypedPayload } from "./payload.ts";
 import { CorePositionData } from "./position.ts";
 import { CoreNamed } from "./type.ts";
 
@@ -100,5 +104,15 @@ export class CoreObject {
     if (typeof owner === "string") data.owner = owner;
     if (typeof parent === "string") data.parent = parent;
     return data;
+  }
+
+  use(object: CoreObject): CoreEvent | undefined {
+    if (this.position?.zone === CORE_FIELD_ZONE && this.types.has(CORE_CHARACTER_CARD_TYPE))
+      return this.game.state.run(
+        new CoreEvent(this.game, {
+          ...CoreEventOptionsValidator.Parse(use),
+          variables: { character: toTypedPayload(this), object: toTypedPayload(object) },
+        }),
+      );
   }
 }

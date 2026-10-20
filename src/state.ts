@@ -6,6 +6,7 @@ import { CORE_TURN_EVENT_NAME } from "./constants/event.ts";
 import {
   CORE_AFTER_SIDE,
   CORE_BEFORE_SIDE,
+  CORE_BUFFER_ZONE,
   CORE_FIELD_ZONE,
   CORE_VOID_ZONE,
 } from "./constants/position.ts";
@@ -25,6 +26,7 @@ import {
 import { CoreRandom, CoreRandomData, CoreRandomOptions } from "./random.ts";
 
 export const CoreStateData = Type.Object({
+  buffer: Type.Array(Type.String()),
   cards: Type.Record(Type.String(), CoreCardData),
   dimensions: Type.Number(),
   events: Type.Record(Type.String(), CoreEventData),
@@ -39,6 +41,7 @@ export const CoreStateData = Type.Object({
 });
 export type CoreStateData = Type.Static<typeof CoreStateData>;
 export const CoreStateOptions = Type.Object({
+  buffer: Type.Optional(Type.Array(Type.String())),
   cards: Type.Optional(Type.Record(Type.String(), CoreCardOptions)),
   dimensions: Type.Number(),
   events: Type.Optional(Type.Record(Type.String(), CoreEventOptions)),
@@ -54,6 +57,7 @@ export const CoreStateOptions = Type.Object({
 export type CoreStateOptions = Type.Static<typeof CoreStateOptions>;
 
 export class CoreState {
+  buffer: Set<string>;
   cards = new Map<string, CoreCard>();
   dimensions: number;
   events = new Map<string, CoreEvent>();
@@ -70,6 +74,7 @@ export class CoreState {
   constructor(
     game: CoreGame,
     {
+      buffer,
       cards,
       dimensions,
       events,
@@ -101,6 +106,7 @@ export class CoreState {
       this.events.set(id, new CoreEvent(this.game, event));
     }
 
+    this.buffer = new Set(buffer);
     this.dimensions = dimensions;
     this.field = new Map(
       Object.entries(field ?? {}).map(([position, objects]) => [
@@ -194,6 +200,9 @@ export class CoreState {
     if (!zone) return 0;
 
     switch (zone) {
+      case CORE_BUFFER_ZONE:
+        return this.inBuffer(objects);
+
       case CORE_FIELD_ZONE:
         return this.inField(objects, position, index);
 
@@ -203,6 +212,20 @@ export class CoreState {
       default:
         return position.player.in(objects, position.zone, index);
     }
+  }
+
+  inBuffer(objects: CoreObject | CoreObject[]): number {
+    if (!Array.isArray(objects)) objects = [objects];
+    let count = 0;
+
+    for (const object of objects) {
+      if (object.position?.zone === CORE_BUFFER_ZONE || this.buffer.has(object.id)) continue;
+      object.position = { zone: CORE_BUFFER_ZONE };
+      this.buffer.add(object.id);
+      count++;
+    }
+
+    return count;
   }
 
   inField(
@@ -279,6 +302,7 @@ export class CoreState {
       if (!zone) continue;
 
       switch (zone) {
+        case CORE_BUFFER_ZONE:
         case CORE_FIELD_ZONE:
         case CORE_VOID_ZONE:
           count += this[`out${capitalize(zone)}`](object);
@@ -288,6 +312,19 @@ export class CoreState {
           count += this.getPlayer(object.position?.player)?.out(object) ?? 0;
           break;
       }
+    }
+
+    return count;
+  }
+
+  outBuffer(objects: CoreObject[] | CoreObject): number {
+    if (!Array.isArray(objects)) objects = [objects];
+    let count = 0;
+
+    for (const object of objects) {
+      if (object.position?.zone !== CORE_BUFFER_ZONE || !this.buffer.delete(object.id)) continue;
+      delete object.position;
+      count++;
     }
 
     return count;
@@ -351,6 +388,7 @@ export class CoreState {
 
   toJSON(): CoreStateData {
     const {
+      buffer,
       cards,
       dimensions,
       events,
@@ -364,6 +402,7 @@ export class CoreState {
       void: voidZone,
     } = this;
     const data: CoreStateData = {
+      buffer: buffer.values().toArray(),
       cards: Object.fromEntries(cards.entries().map(([id, card]) => [id, card.toJSON()])),
       dimensions,
       events: Object.fromEntries(events.entries().map(([id, event]) => [id, event.toJSON()])),
